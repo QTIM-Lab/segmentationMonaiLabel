@@ -1,0 +1,22 @@
+imports:
+- $import torch
+- $import scripts
+- $import scripts.net
+- $import scripts.train
+- $import scripts.transforms
+- $import scripts.dataloaders
+
+net:
+  _target_: scripts.net.Net
+
+transforms: '$scripts.transforms.transform'
+
+dataloader: '$scripts.dataloaders.get_dataloader(True, @transforms)'
+
+train:
+- $scripts.train.train(@net, @dataloader)
+- $torch.save(@net.state_dict(), './cifar_net.pth')
+
+# trainer:
+# - $scripts.train.train(@net, @dataloader)
+# - $torch.save(@net.state_dict(), './cifar_net.pth')

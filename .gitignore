@@ -1,0 +1,8 @@
+*.pt
+*.pth
+*.ts
+
+__pycache__/
+
+datastore/
+

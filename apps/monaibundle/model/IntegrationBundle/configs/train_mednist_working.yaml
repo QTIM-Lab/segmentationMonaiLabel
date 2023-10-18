@@ -1,0 +1,206 @@
+# added a few more imports
+imports: 
+- $import torch
+- $import datetime
+- $import os
+
+root_dir: ..
+
+# use constants from MONAI instead of hard-coding names
+image: $monai.utils.CommonKeys.IMAGE
+label: $monai.utils.CommonKeys.LABEL
+pred: $monai.utils.CommonKeys.PRED
+
+# these are added definitions
+bundle_root: .
+ckpt_path: $@bundle_root + '/models/model.pt'
+
+# define a device for the network
+device: '$torch.device(''cuda:0'')'
+
+# store the class names for inference later
+class_names: [plane,car,bird,cat,deer,dog,frog,horse,ship,truck]
+
+# define the network separately, don't need to refer to MONAI types by name or import MONAI
+network_def:
+  _target_: scripts.net.Net
+
+# define the network to be the given definition moved to the device
+net: '$@network_def.to(@device)'
+
+# define a transform sequence as a list of transform objects instead of using Compose here
+train_transforms:
+- _target_: LoadImaged
+  keys: '@image'
+  image_only: true
+- _target_: EnsureChannelFirstd
+  keys: '@image'
+- _target_: ScaleIntensityd
+  keys: '@image'
+
+
+
+max_epochs: 25
+learning_rate: 0.00001  # learning rate, again artificially slow
+val_interval: 1  # run validation every n'th epoch
+save_interval: 1 # save the model weights every n'th epoch
+
+# choose a unique output subdirectory every time training is started, 
+output_dir: '$datetime.datetime.now().strftime(@root_dir+''/output/output_%y%m%d_%H%M%S'')'
+
+train_dataset:
+  _target_: MedNISTDataset
+  root_dir: '@root_dir'
+  transform: 
+    _target_: Compose
+    transforms: '@train_transforms'
+  section: training
+  download: true
+
+train_dl:
+  _target_: DataLoader
+  dataset: '@train_dataset'
+  batch_size: 512
+  shuffle: true
+  num_workers: 4
+
+# separate dataset taking from the "validation" section
+eval_dataset:
+  _target_: MedNISTDataset
+  root_dir: '@root_dir'
+  transform: 
+    _target_: Compose
+    transforms: '$@train_transforms'
+  section: validation
+  download: true
+
+# separate dataloader for evaluation
+eval_dl:
+  _target_: DataLoader
+  dataset: '@eval_dataset'
+  batch_size: 512
+  shuffle: false
+  num_workers: 4
+
+# transforms applied to network output, in this case applying activation, argmax, and one-hot-encoding
+post_transform:
+  _target_: Compose
+  transforms:
+  - _target_: Activationsd
+    keys: '@pred'
+    softmax: true  # apply softmax to the prediction to emphasize the most likely value
+  - _target_: AsDiscreted
+    keys: ['@label','@pred']
+    argmax: [false, true]  # apply argmax to the prediction only to get a class index number
+    to_onehot: 6  # convert both prediction and label to one-hot format so that both have shape (6,)
+
+# separating out loss, inferer, and optimizer definitions
+
+loss_function:
+  _target_: torch.nn.CrossEntropyLoss
+
+inferer: 
+  _target_: SimpleInferer
+
+optimizer: 
+  _target_: torch.optim.Adam
+  params: '$@net.parameters()'
+  lr: '@learning_rate'
+
+# Handlers to load the checkpoint if present, run validation at the chosen interval, save the checkpoint
+# at the chosen interval, log stats, and write the log to a file in the output directory.
+handlers:
+- _target_: CheckpointLoader
+  _disabled_: '$not os.path.exists(@ckpt_path)'
+  load_path: '@ckpt_path'
+  load_dict:
+    model: '@net'
+- _target_: ValidationHandler
+  validator: '@evaluator'
+  epoch_level: true
+  interval: '@val_interval'
+- _target_: CheckpointSaver
+  save_dir: '@output_dir'
+  save_dict:
+    model: '@net'
+  save_interval: '@save_interval'
+  save_final: true  # save the final weights, either when the run finishes or is interrupted somehow
+- _target_: StatsHandler
+  name: train_loss
+  tag_name: train_loss
+  output_transform: '$monai.handlers.from_engine([''loss''], first=True)'  # print per-iteration loss
+- _target_: LogfileHandler
+  output_dir: '@output_dir'
+
+train:
+  trainer:
+    _target_: SupervisedTrainer
+    device: '@device'
+    max_epochs: '@max_epochs'
+    train_data_loader: '@train_dl'
+    network: '@net'
+    optimizer: '@optimizer'
+    loss_function: '@loss_function'
+    inferer: '@inferer'
+    train_handlers: '@handlers'
+  dataset:
+    _target_: MedNISTDataset
+    root_dir: '@root_dir'
+    transform: 
+      _target_: Compose
+      transforms: '@train_transforms'
+    section: training
+    download: true
+
+validate:
+  _target_: SupervisedEvaluator
+  device: '@device'
+  val_data_loader: '@eval_dl'
+  network: '@net'
+  inferer: '@inferer'
+  postprocessing: '@post_transform'
+  key_val_metric: '@metrics'
+  val_handlers: '@val_handlers'
+  dataset:
+    _target_: MedNISTDataset
+    root_dir: '@root_dir'
+    transform: 
+      _target_: Compose
+      transforms: '$@train_transforms'
+    section: validation
+    download: true
+
+
+
+
+# validation handlers which log stats and direct the log to a file
+val_handlers:
+- _target_: StatsHandler
+  name: val_stats
+  output_transform: '$lambda x: None'
+- _target_: LogfileHandler
+  output_dir: '@output_dir'
+    
+# Metrics to assess validation results, you can have more than one here but may 
+# need to adapt the format of pred and label.
+metrics:
+  accuracy:
+    _target_: 'ignite.metrics.Accuracy'
+    output_transform: '$monai.handlers.from_engine([@pred, @label])'
+
+# runs the evaluation process, invoked by trainer via the ValidationHandler object
+evaluator:
+  _target_: SupervisedEvaluator
+  device: '@device'
+  val_data_loader: '@eval_dl'
+  network: '@net'
+  inferer: '@inferer'
+  postprocessing: '@post_transform'
+  key_val_metric: '@metrics'
+  val_handlers: '@val_handlers'
+
+# train:
+# - '$@trainer.run()'
+
+run:
+- '$@train#trainer.run()'

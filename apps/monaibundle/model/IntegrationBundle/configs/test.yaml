@@ -1,0 +1,17 @@
+imports:
+- $import torch
+- $import scripts
+- $import scripts.test
+- $import scripts.transforms
+- $import scripts.dataloaders
+
+net:
+  _target_: scripts.net.Net
+
+transforms: '$scripts.transforms.transform'
+
+dataloader: '$scripts.dataloaders.get_dataloader(False, @transforms)'
+
+test:
+- $@net.load_state_dict(torch.load('./cifar_net.pth'))
+- $scripts.test.test(@net, @dataloader)

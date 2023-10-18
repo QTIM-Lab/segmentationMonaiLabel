@@ -1,0 +1,46 @@
+imports:
+- $import glob
+- $import torch
+- $import scripts
+- $import scripts.inference
+- $import scripts.transforms
+
+ckpt_path: './cifar_net.pth'
+
+input_dir: 'test_cifar10'
+input_files: '$sorted(glob.glob(@input_dir+''/*.*''))'
+
+net:
+  _target_: scripts.net.Net
+
+network_def:
+  _target_: scripts.net.Net
+
+transforms: '$scripts.transforms.transform'
+
+image: $monai.utils.CommonKeys.IMAGE
+pred: $monai.utils.CommonKeys.PRED
+
+pre_transforms:
+- _target_: LoadImaged
+  keys: '@image'
+  image_only: true
+- _target_: EnsureChannelFirstd
+  keys: '@image'
+- _target_: ScaleIntensityd
+  keys: '@image'
+- _target_: NormalizeIntensityd
+  keys: '@image'
+  subtrahend: [0.5, 0.5, 0.5]
+  divisor: [0.5, 0.5, 0.5]
+  channel_wise: True
+
+post_transforms:
+- _target_: Activationsd
+  keys: '@pred'
+  softmax: true 
+
+
+inference:
+- $@net.load_state_dict(torch.load('./cifar_net.pth'))
+- $scripts.inference.inference(@net, @transforms, @input_files)
