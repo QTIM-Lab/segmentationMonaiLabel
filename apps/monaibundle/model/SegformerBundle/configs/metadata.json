@@ -11,10 +11,10 @@
     },
     "name": "SegformerBundle",
     "task": "Example Bundle",
-    "description": "This illustrates integrating non-MONAI code (CIFAR10 classification) into a bundle",
-    "authors": "Your Name Here",
-    "copyright": "Copyright (c) Your Name Here",
-    "data_source": "CIFAR10",
+    "description": "Segformer Segmentation for Cropped Fundus Cup and Disc",
+    "authors": "Scott Kinder & Ben Bearce",
+    "copyright": "QTIM",
+    "data_source": "Uploaded",
     "data_type": "float32",
     "intended_use": "This is suitable for demonstration only",
     "network_data_format": {
@@ -24,9 +24,9 @@
                 "format": "magnitude",
                 "modality": "natural",
                 "num_channels": 3,
-                "spatial_shape": [32, 32],
+                "spatial_shape": [512, 512],
                 "dtype": "float32",
-                "value_range": [-1, 1],
+                "value_range": [0, 255],
                 "is_patch_data": false,
                 "channel_def": {
                     "0": "red",
@@ -39,22 +39,15 @@
             "pred": {
                 "type": "probabilities",
                 "format": "classes",
-                "num_channels": 10,
-                "spatial_shape": [10],
+                "num_channels": 3,
+                "spatial_shape": [512,512],
                 "dtype": "float32",
                 "value_range": [0, 1],
                 "is_patch_data": false,
                 "channel_def": {
-                    "0": "airplane",
-                    "1": "automobile",
-                    "2": "bird",
-                    "3": "cat",
-                    "4": "deer",
-                    "5": "dog",
-                    "6": "frog",
-                    "7": "horse",
-                    "8": "ship",
-                    "9": "truck"
+                    "0": "background",
+                    "1": "disc",
+                    "2": "cup"
                 }
             }
         }

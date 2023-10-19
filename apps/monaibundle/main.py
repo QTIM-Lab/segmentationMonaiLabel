@@ -28,6 +28,7 @@ from monailabel.tasks.scoring.epistemic_v2 import EpistemicScoring
 from monailabel.tasks.train.bundle import BundleTrainTask
 from monailabel.utils.others.generic import get_bundle_models, strtobool
 
+from lib.activelearning.last import Last
 from lib.infers import SegmentationBundleInferTask
 
 logger = logging.getLogger(__name__)
@@ -90,6 +91,7 @@ class SegmentationApp(MONAILabelApp):
         strategies: Dict[str, Strategy] = {
             "random": Random(),
             "first": First(),
+            "last": Last()
         }
 
         logger.info(f"Active Learning Strategies:: {list(strategies.keys())}")

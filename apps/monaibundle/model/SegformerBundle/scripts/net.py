@@ -2,48 +2,54 @@ import torch
 import torch.nn as nn
 import torch.nn.functional as F
 from transformers import SegformerForSemanticSegmentation
+import transformers
 
 import torch
 import torch.nn as nn
 import torch.nn.functional as F
 
 
-# class CustomSegformerModel(nn.Module):
-#     def __init__(self):
-#         super().__init__()
-#         self.conv1 = nn.Conv2d(3, 6, 5)
-#         self.pool = nn.MaxPool2d(2, 2)
-#         self.conv2 = nn.Conv2d(6, 16, 5)
-#         self.fc1 = nn.Linear(16 * 5 * 5, 120)
-#         self.fc2 = nn.Linear(120, 84)
-#         self.fc3 = nn.Linear(84, 10)
-
-#     def forward(self, x):
-#         x = self.pool(F.relu(self.conv1(x)))
-#         x = self.pool(F.relu(self.conv2(x)))
-#         x = torch.flatten(x, 1)
-#         x = F.relu(self.fc1(x))
-#         x = F.relu(self.fc2(x))
-#         x = self.fc3(x)
-#         return x
-
-
-class CustomSegformerModel(nn.Module):
+class MyCustomNet(nn.Module):
     def __init__(self, dropout_prob=0.1):
-        super(CustomSegformerModel, self).__init__()
+        super().__init__()
 
-        self.pretrained_model = SegformerForSemanticSegmentation.from_pretrained("nvidia/mit-b5")
-        self.config = self.pretrained_model.config
-
+        pretrained_model = SegformerForSemanticSegmentation.from_pretrained(
+            "nvidia/mit-b5", local_files_only=True
+        )
+        # Get the model's configuration
+        config = pretrained_model.config
         # Modify the configuration to add dropout
-        self.config.hidden_dropout_prob = dropout_prob
-        self.config.attention_probs_dropout_prob = dropout_prob
-        self.config.classifier_dropout_prob = dropout_prob
-        self.config.drop_path_rate = dropout_prob
+        config.hidden_dropout_prob = dropout_prob
+        config.attention_probs_dropout_prob = dropout_prob
+        config.classifier_dropout_prob = dropout_prob
+        config.drop_path_rate = dropout_prob
 
-        self.model = SegformerForSemanticSegmentation(config=self.config)
-        # self.model.load_state_dict(self.pretrained_model.state_dict())
-        self.model.decode_head.classifier = nn.Conv2d(768, 3, kernel_size=1)
+        # Initialize a new model with the modified configuration
+        self._model = SegformerForSemanticSegmentation(config=config)
+
+        # Load the pretrained weights on the class itself
+        self._model.load_state_dict(pretrained_model.state_dict())
+
+        # Replace the decoder head classifier with a new one
+        self._model.decode_head.classifier = nn.Conv2d(768, 3, kernel_size=1)
 
     def forward(self, input):
-        return self.model(input)
+        pred = self._model(input).logits
+        return nn.functional.interpolate(pred, size=input.shape[-2:], mode="bilinear", align_corners=False)
+
+    def state_dict(self, *args, **kwargs):
+        """Removes the _model. prefix from the keys of the state dict."""
+        state_dict = super().state_dict(*args, **kwargs)
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = key[len("_model."):]
+            new_state_dict[new_key] = value
+        return new_state_dict
+
+    def load_state_dict(self, state_dict, *args, **kwargs):
+        """Adds the _model. prefix to the keys of the state dict."""
+        new_state_dict = {}
+        for key, value in state_dict.items():
+            new_key = "_model." + key
+            new_state_dict[new_key] = value
+        return super().load_state_dict(new_state_dict, *args, **kwargs)

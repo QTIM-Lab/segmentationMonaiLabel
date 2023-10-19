@@ -4,6 +4,8 @@ imports:
 - $import scripts.inference
 - $import scripts.transforms
 
+# bundle_root: ./model/SegformerBundle
+
 # ckpt_path: './cifar_net.pth'
 
 # input_dir: 'test_cifar10'
@@ -13,15 +15,18 @@ imports:
 
 dropout: 0.1
 
-network_def: 
-- _target_: scripts.net.CustomSegformerModel
+# net:
+#   _target_: scripts.net.MyCustomNet
+
+network_def:
+  _target_: scripts.net.MyCustomNet
 
 # transforms: '$scripts.transforms.transform'
 
 image: $monai.utils.CommonKeys.IMAGE
 pred: $monai.utils.CommonKeys.PRED
 
-# pre_transforms: '$scripts.transforms.test_transform'
+# pre_transforms: scripts.transforms.test_transform
 
 pre_transforms:
 - _target_: LoadImaged
@@ -29,31 +34,22 @@ pre_transforms:
   image_only: true
 - _target_: EnsureChannelFirstd
   keys: 'image'
+- _target_: Resized
+  keys: 'image'
+  spatial_size: [512,512]
+- _target_: ScaleIntensityd
+  keys: '@image'
 - _target_: NormalizeIntensityd
   keys: '@image'
   subtrahend: [0.522, 0.300, 0.167]
   divisor: [0.240, 0.189, 0.147]
   channel_wise: True
 
-# pre_transforms:
-# - _target_: LoadImaged
-#   keys: '@image'
-#   image_only: true
-# - _target_: EnsureChannelFirstd
-#   keys: '@image'
-# - _target_: ScaleIntensityd
-#   keys: '@image'
-# - _target_: NormalizeIntensityd
-#   keys: '@image'
-#   subtrahend: [0.5, 0.5, 0.5]
-#   divisor: [0.5, 0.5, 0.5]
-#   channel_wise: True
-
 # https://docs.monai.io/en/stable/transforms.html
 # see above and ctrl+f for Activationsd
 post_transforms:
 - _target_: Activationsd
   keys: '@pred'
-  sigmoid: true
+  sigmoid: True
 
 
