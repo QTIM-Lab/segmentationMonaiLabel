@@ -3,6 +3,7 @@ imports:
 - $import scripts.net
 - $import scripts.inference
 - $import scripts.transforms
+- $from PIL import Image
 
 # bundle_root: ./model/SegformerBundle
 
@@ -26,24 +27,30 @@ network_def:
 image: $monai.utils.CommonKeys.IMAGE
 pred: $monai.utils.CommonKeys.PRED
 
-# pre_transforms: scripts.transforms.test_transform
+# pre_transforms: '$scripts.transforms.test_transform'
 
+# pre_transforms:
+# - _target_: LoadImaged
+#   keys: '@image'
+#   image_only: true
+# - _target_: EnsureChannelFirstd
+#   keys: 'image'
+# - _target_: Resized
+#   keys: 'image'
+#   spatial_size: [512,512]
+# - _target_: ScaleIntensityd
+#   keys: '@image'
+# - _target_: NormalizeIntensityd
+#   keys: '@image'
+#   subtrahend: [0.522, 0.300, 0.167]
+#   divisor: [0.240, 0.189, 0.147]
+#   channel_wise: True
+
+# ITS HARD CODED FOR NOW!
 pre_transforms:
 - _target_: LoadImaged
   keys: '@image'
   image_only: true
-- _target_: EnsureChannelFirstd
-  keys: 'image'
-- _target_: Resized
-  keys: 'image'
-  spatial_size: [512,512]
-- _target_: ScaleIntensityd
-  keys: '@image'
-- _target_: NormalizeIntensityd
-  keys: '@image'
-  subtrahend: [0.522, 0.300, 0.167]
-  divisor: [0.240, 0.189, 0.147]
-  channel_wise: True
 
 # https://docs.monai.io/en/stable/transforms.html
 # see above and ctrl+f for Activationsd
@@ -51,5 +58,8 @@ post_transforms:
 - _target_: Activationsd
   keys: '@pred'
   sigmoid: True
-
+- _target_: AsDiscreted
+  keys: '@pred'
+  argmax: True
+  to_onehot: 3
 
