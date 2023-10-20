@@ -6,7 +6,7 @@ const DisplayImgArea = (props) => {
 
   const handleClick = () => {
     // Define the URL and headers
-    const url = 'http://0.0.0.0:8000/datastore/image?image=' + props.imgId;
+    const url = 'http://34.91.126.112:8000/datastore/image?image=' + props.imgId;
     const headers = {
       'Accept': 'application/json',
     };

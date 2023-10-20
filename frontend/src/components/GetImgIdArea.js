@@ -4,7 +4,7 @@ const GetImgIdArea = (props) => {
 
   const handleClick = () => {
     // Define the URL and headers
-    const url = 'http://0.0.0.0:8000/activelearning/last';
+    const url = 'http://34.91.126.112:8000/activelearning/last';
     const headers = {
       'Accept': 'application/json',
       'Content-Type': 'application/json',

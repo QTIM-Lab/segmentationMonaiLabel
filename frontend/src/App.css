@@ -36,3 +36,36 @@
     transform: rotate(360deg);
   }
 }
+
+.spinner {
+  display: inline-block; /* Add this line */
+  border: 4px solid rgba(255, 255, 255, 0.3);
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  width: 16px;
+  height: 16px;
+  animation: spin 1s linear infinite;
+}
+
+.spinner-inner {
+  width: 8px;
+  height: 8px;
+  border: 4px solid transparent;
+  border-top: 4px solid #3498db;
+  border-radius: 50%;
+  position: absolute;
+  top: 0px;
+  left: 0px;
+  animation: spin 1s linear infinite;
+}
+
+.check-mark {
+  display: inline-block; /* Add this line */
+  font-size: 16px;
+  color: #4CAF50; /* Green color for the check mark */
+}
+
+@keyframes spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}

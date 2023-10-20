@@ -59,7 +59,7 @@ def find_and_draw_max_diameter(contour, image, color_tuple):
     return max_diameter
 
 
-def train(model, weights_path, train_dataloader, num_epochs=2, learning_rate=5e-6):
+def train(model, weights_path, train_dataloader, num_epochs=1, learning_rate=5e-6):
     if weights_path:
         model.load_state_dict(torch.load(weights_path))
         print("weights loaded")

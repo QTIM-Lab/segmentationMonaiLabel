@@ -1,17 +1,23 @@
 import React, { useState, useEffect } from "react";
 
+import { Row, Button } from "react-bootstrap";
+import SelectEdit from "./SelectEdit";
+
 const DrawingArea = (props) => {
+
+  const [selectedOption, setSelectedOption] = useState('Cup');
   
   const [position, setPosition] = useState({ x: 0, y: 0 });
   const [isDrawing, setIsDrawing] = useState(false);
-  const [isErasing, setIsErasing] = useState(false);
-  const [ctx, setCtx] = useState(null);
+  // const [isErasing, setIsErasing] = useState(false);
+  // const [props.ctx, props.setCtx] = useState(null);
   // const [imageData, setImageData] = useState(null);
   const [responseData, setResponseData] = useState(null)
+  const [showCanvas, setShowCanvas] = useState(true);
 
   useEffect(() => {
     if (props.canvasRef.current) {
-      setCtx(props.canvasRef.current.getContext("2d"));
+      props.setCtx(props.canvasRef.current.getContext("2d"));
     }
   }, [props.canvasRef]);
 
@@ -23,11 +29,11 @@ const DrawingArea = (props) => {
       image.src = props.inferenceResponseData;
 
       image.onload = () => {
-        ctx.clearRect(0, 0, canvas.width, canvas.height);
-        ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
+        props.ctx.clearRect(0, 0, canvas.width, canvas.height);
+        props.ctx.drawImage(image, 0, 0, canvas.width, canvas.height);
       };
     }
-  }, [props.inferenceResponseData, ctx]);
+  }, [props.inferenceResponseData, props.ctx]);
 
   const handleDown = (event) => {
     setIsDrawing(true);
@@ -43,19 +49,27 @@ const DrawingArea = (props) => {
       const x = event.clientX - canvasRect.left;
       const y = event.clientY - canvasRect.top;
 
-      ctx.beginPath();
-      ctx.arc(x, y, 10, 0, 2 * Math.PI);
-      ctx.fillStyle = "red";
-      ctx.fill();
+      props.ctx.beginPath();
+      props.ctx.arc(x, y, 10, 0, 2 * Math.PI);
+      if (selectedOption === "Background") {
+        props.ctx.fillStyle = "rgb(0, 0, 255)";
+      } else if (selectedOption === "Disc") {
+        props.ctx.fillStyle = "rgb(0, 255, 0)";
+      } else if (selectedOption === "Cup") {
+        props.ctx.fillStyle = "rgb(255, 0, 0)";
+      }
+      
+      props.ctx.fill();
 
       setPosition({ x, y });
-    } else if (isErasing) {
-      const canvasRect = props.canvasRef.current.getBoundingClientRect();
-      const x = event.clientX - canvasRect.left;
-      const y = event.clientY - canvasRect.top;
-
-      ctx.clearRect(x - 5, y - 5, 10, 10);
     }
+    // } else if (isErasing) {
+    //   const canvasRect = props.canvasRef.current.getBoundingClientRect();
+    //   const x = event.clientX - canvasRect.left;
+    //   const y = event.clientY - canvasRect.top;
+
+    //   props.ctx.clearRect(x - 5, y - 5, 10, 10);
+    // }
   };
 
   const handleUp = (event) => {
@@ -64,18 +78,19 @@ const DrawingArea = (props) => {
       const x = event.clientX - canvasRect.left;
       const y = event.clientY - canvasRect.top;
 
-      ctx.beginPath();
-      ctx.moveTo(position.x, position.y);
-      ctx.lineTo(x, y);
-      ctx.stroke();
-    } else if (isErasing) {
-      const canvasRect = props.canvasRef.current.getBoundingClientRect();
-      const x = event.clientX - canvasRect.left;
-      const y = event.clientY - canvasRect.top;
-
-      ctx.clearRect(x - 5, y - 5, 10, 10);
-      setIsErasing(false);
+      props.ctx.beginPath();
+      props.ctx.moveTo(position.x, position.y);
+      props.ctx.lineTo(x, y);
+      props.ctx.stroke();
     }
+    // } else if (isErasing) {
+    //   const canvasRect = props.canvasRef.current.getBoundingClientRect();
+    //   const x = event.clientX - canvasRect.left;
+    //   const y = event.clientY - canvasRect.top;
+
+    //   props.ctx.clearRect(x - 5, y - 5, 10, 10);
+    //   setIsErasing(false);
+    // }
 
     setIsDrawing(false);
 
@@ -85,102 +100,62 @@ const DrawingArea = (props) => {
     // Update the state variable to store the image data.
     // setImageData(imageDataBytes);
   };
-
-  const uploadImage = () => {
-    if (!props.canvasRef.current) {
-      alert('Canvas element not available.');
-      return;
-    }
-  
-    // Get the canvas element and convert it to a data URL with the "image/png" format.
-    const canvas = props.canvasRef.current;
-    const imageData = canvas.toDataURL("image/jpeg");
-  
-    // Check if there's image data to upload.
-    if (!imageData) {
-      alert('No image data to upload.');
-      return;
-    }
-
-    console.log("data: ", imageData)
-  
-    // Define the URL and headers
-    const url = `http://0.0.0.0:8000/datastore/label?image=${props.imgId}&tag=website_trying_jpeg_again`;
-    const headers = {
-      'Accept': 'application/json',
-    };
-  
-    // Create a new FormData object to handle multipart/form-data
-    const formData = new FormData();
-
-    formData.append('params', JSON.stringify({}));
-  
-    // Add the image data as a blob with a "image/png" type
-    const formFileName = `${props.imgId}.jpeg`;
-
-    const byteCharacters = atob(imageData.split(',')[1]);
-    const byteNumbers = new Array(byteCharacters.length);
-    for (let i = 0; i < byteCharacters.length; i++) {
-      byteNumbers[i] = byteCharacters.charCodeAt(i);
-    }
-    const byteArray = new Uint8Array(byteNumbers);
-    const imageBlob = new Blob([byteArray], { type: 'image/jpeg' });
-    formData.append('label', imageBlob, formFileName);
-  
-    // Send a PUT request with the FormData using the fetch API
-    fetch(url, {
-      method: 'PUT',
-      headers: headers,
-      body: formData,
-    })
-    .then(response => response.json())
-    .then(file => {
-      setResponseData(file);
-    })
-    .catch(error => {
-      console.error('Error:', error);
-    });
-  };
   
 
-  const toggleErasing = () => {
-    setIsErasing(!isErasing);
-  };
+  // const toggleErasing = () => {
+  //   setIsErasing(!isErasing);
+  // };
 
-  const clearCanvas = () => {
-    if (ctx) {
-      ctx.clearRect(0, 0, props.canvasRef.current.width, props.canvasRef.current.height);
-    }
-  };
+  // const clearCanvas = () => {
+  //   if (props.ctx) {
+  //     props.ctx.clearRect(0, 0, props.canvasRef.current.width, props.canvasRef.current.height);
+  //   }
+  // };
 
-  const soCanvas = () => {
-    console.log("entering")
-    debugger
-  };
+  const toggleShowCanvas = () => {
+    setShowCanvas(!showCanvas)
+  }
 
+  const opacityVal = showCanvas ? 0.15: 0
 
   return (
     <div>
-      <canvas
-        ref={props.canvasRef}
-        width={512}
-        height={512}
-        onMouseDown={handleDown}
-        onMouseMove={handleMove}
-        onMouseUp={handleUp}
-        style={{ position: "absolute", zIndex: 999, opacity: 0.2 }}
-      />
-      {/* <img src={props.inferenceResponseData} height={512} width={512} style={{ position: "absolute", opacity: 0.2 }} alt="Pred" /> */}
-      <img src={props.imageResponseData} height={512} width={512} alt="Background" />
+      <div>
+          <canvas
+            ref={props.canvasRef}
+            width={512}
+            height={512}
+            onMouseDown={handleDown}
+            onMouseMove={handleMove}
+            onMouseUp={handleUp}
+            style={{ position: "absolute", zIndex: 999, opacity: opacityVal }}
+          />
+        
+        {/* <img src={props.inferenceResponseData} height={512} width={512} style={{ position: "absolute", opacity: 0.2 }} alt="Pred" /> */}
+        <img src={props.imageResponseData} height={512} width={512} alt="" />
+      </div>
       
-      
-      <button onClick={toggleErasing}>
+      {/* <button onClick={toggleErasing}>
         {isErasing ? "Stop Erasing" : "Erase"}
-      </button>
-      <button onClick={uploadImage}>Upload Image</button>
-      <button onClick={clearCanvas}>Clear Canvas</button>
-      <button onClick={soCanvas}>So Canvas</button>
-      {responseData && <pre>Response: {JSON.stringify(responseData, null, 2)}</pre>}
+      </button> */}
+      <Row className="my-2">
+        <Button onClick={toggleShowCanvas} style={{width: "auto", margin: "auto"}}>
+          {
+            showCanvas &&
+            "Hide "
+          }
+          {
+            !showCanvas &&
+            "Show "
+          }
+          Canvas
+        </Button>
+        {/* <Button onClick={clearCanvas} style={{width: "auto", margin: "auto"}}>Clear Canvas</Button> */}
+      </Row>
+      <Row>
+        <SelectEdit selectedOption={selectedOption} setSelectedOption={setSelectedOption} />
+      </Row>
+      
     </div>
   );
 };
