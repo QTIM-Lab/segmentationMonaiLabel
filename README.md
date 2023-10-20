@@ -48,13 +48,17 @@ Applications like these serve to both improve the quality and quantity of labele
 
 ## Overview
 
-The term "MONAI Label app" is defined as a client-server architecture utilizing the MONAI Label API Server. For this app, the client is a React frontend, and the server is the MONAI Label API server. Oftentimes, the client is different such as 3DSlicer or OHIF, but the MONAI Label API server does not care what client is consuming requests to it. We choose to use a React front end to provide a web interface for this amazing tool (MONAI Label), improving accessibility and leveraging modern web tools.
+The term "MONAI Label app" is defined as a client-server architecture utilizing the MONAI Label API server. For this app, the client is a React frontend, and the server is the MONAI Label API server. Oftentimes, the client is different such as 3DSlicer or OHIF, but the MONAI Label API server does not care what client is consuming requests to it. We choose to use a React front end to provide a web interface for this amazing tool (MONAI Label), improving accessibility and leveraging modern web tools.
 
 The MONAI Label API server is written in Python and exposes routes such as :8000/train or :8000/info, which communicates over HTTP(S?) but over the atypical port 8000 to avoid conflicts. Any client can consume the request by querying the RESTful API.
 
 While other MONAI Label apps might have different tasks (classification, regression, instance segmentation, etc.), this repo focuses on cropped fundus (semantic) segmentation of cup and disc regions.
 
 ## Communication Between Client (React) and Server (MONAI Label)
+
+Todo.
+
+## Active Learning
 
 Todo..
 
@@ -65,3 +69,7 @@ Todo...
 ## Training
 
 Todo....
+
+## Writers
+
+Todo.....
