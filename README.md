@@ -31,11 +31,11 @@ While other MONAI Label apps might have different tasks (classification, regress
 
 ## MONAI Label API Server Docs
 
-[MONAI Label API Server Docs](apps/monaibundle/README.md)
+[MONAI Label API Server Docs](apps/monaibundle/)
 
 ## React Frontend Docs
 
-[React Frontend Docs](frontend/README.md)
+[React Frontend Docs](frontend/)
 
 ## Local Development
 
