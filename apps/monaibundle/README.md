@@ -35,10 +35,10 @@ A general main.py file is described best by the tutorial/overview here: [https:/
 
 Our main.py differs in the following ways:
 
-1. [Custom BundleInferTask, SegmentationBundleInferTask](infers)
-2. [Custom BundleTrainTask, SegmentationBundleTrainTask](trainers)
-3. [Custom (output) Writer, segmentation_writer](writers)
-4. [Custom activelearning Strategy, last (random)](activelearning)
+1. [Custom BundleInferTask, SegmentationBundleInferTask](lib/infers)
+2. [Custom BundleTrainTask, SegmentationBundleTrainTask](lib/trainers)
+3. [Custom (output) Writer, segmentation_writer](lib/writers)
+4. [Custom activelearning Strategy, last (random)](lib/activelearning)
 
 ## Potential Future Changes
 
