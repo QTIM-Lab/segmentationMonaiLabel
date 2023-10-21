@@ -6,6 +6,15 @@ MONAI Label Docs: [https://monai.io/label.html](https://monai.io/label.html)
 
 React: [https://react.dev/](https://react.dev/)
 
+## Table of Contents
+- [Purpose](#purpose)
+- [Overview](#overview)
+- [MONAI Label API Server Docs](#monai-label-api-server-docs)
+- [React Front End Docs](#react-frontend-docs)
+- [Local Development](#local-development)
+- [Web Deployment](#web-deployment)
+
+
 ## Purpose
 
 MONAI Label apps (apps that talk to the MONAI Label API server) allow clinicians to more easily annotate labels for datasets by having a ML model provide an initial prediction for the user to either tweak -- or completely throw away if not useful. This means that, at worst, the MONAI Label doesn't impact the time it takes to annotate at all. But, in practice often saves significant time by providing a good starting point for an annotator to refine upon when labeling.
@@ -20,9 +29,17 @@ The MONAI Label API server is written in Python and exposes routes such as :8000
 
 While other MONAI Label apps might have different tasks (classification, regression, instance segmentation, etc.), this repo focuses on cropped fundus (semantic) segmentation of cup and disc regions.
 
-## Local Deployment
+## MONAI Label API Server Docs
 
-The following describes how to start the application locally.
+[MONAI Label API Server Docs](apps/monaibundle/README.md)
+
+## React Frontend Docs
+
+[React Frontend Docs](frontend/README.md)
+
+## Local Development
+
+The following describes how to start the application locally, for development purposes.
 
 MONAI Label API Server:
 
@@ -115,23 +132,3 @@ sudo systemctl reload nginx
 
 # app should now be served on http at the domain name, i.e. 34.205.25.54
 ```
-
-## Communication Between Client (React) and Server (MONAI Label)
-
-Todo.
-
-## Active Learning
-
-Todo..
-
-## Inference
-
-Todo...
-
-## Training
-
-Todo....
-
-## Writers
-
-Todo.....
