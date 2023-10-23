@@ -28,7 +28,6 @@ class Last(Strategy):
         super().__init__("Get Last Sample")
 
     def __call__(self, request, datastore: Datastore):
-        print("LOOOOOOOOOOOOOOOOOOOOOOOOOOOOOOL ---OMFR!!!!!!!!?S?A??F?FE?EW HEY!")
         unlabeled_images = datastore.get_unlabeled_images()
         labeled_images = datastore.get_labeled_images()
         

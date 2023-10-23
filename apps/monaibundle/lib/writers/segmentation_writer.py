@@ -61,7 +61,7 @@ class SegmentationWriter:
         path = data.get("image_path")
         ext = file_ext(path) if path else None
         dtype = data.get(self.key_dtype, None)
-        compress = data.get(self.key_compress, False)
+        # compress = data.get(self.key_compress, False)
         write_to_file = data.get(self.key_write_to_file, True)
 
         ext = data.get(self.key_extension) if data.get(self.key_extension) else ext

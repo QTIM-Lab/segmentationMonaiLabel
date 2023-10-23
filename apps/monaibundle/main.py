@@ -37,9 +37,6 @@ logger = logging.getLogger(__name__)
 
 class SegmentationApp(MONAILabelApp):
     def __init__(self, app_dir, studies, conf):
-        print("WTF")
-        print("conf: ", conf)
-        print("app dir: ", app_dir)
         self.models = get_bundle_models(app_dir, conf, conf_key="bundles")
         # Add Epistemic model for scoring
         # self.epistemic_models = (
@@ -62,7 +59,6 @@ class SegmentationApp(MONAILabelApp):
 
     def init_infers(self) -> Dict[str, InferTask]:
         infers: Dict[str, InferTask] = {}
-        print("models: ", self.models)
         #################################################
         # Models
         #################################################
@@ -136,7 +132,6 @@ def main():
     from pathlib import Path
 
     from monailabel.config import settings
-    print("1. !!!!!!?????")
 
     settings.MONAI_LABEL_DATASTORE_AUTO_RELOAD = False
     settings.MONAI_LABEL_DATASTORE_FILE_EXT = ["*.png", "*.jpg", "*.jpeg", ".nii", ".nii.gz"]
