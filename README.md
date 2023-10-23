@@ -62,7 +62,7 @@ pyenv shell 3.9.13
 # Update wheel and pip (good practice and specified by MONAI Label installation docs)
 pip install --upgrade pip setuptools wheel
 # Install python requirements if not already
-pip install -r apps/requirements.txt
+pip install -r apps/monaibundle/requirements.txt
 
 # Check CUDA is working...
 python -c "import torch; print(torch.cuda.is_available())"
