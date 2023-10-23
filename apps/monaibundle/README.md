@@ -45,7 +45,7 @@ Our main.py only differs in 3 ways:
 
 3. [Custom activelearning Strategy, last (random)](lib/activelearning)
 
-![Example Image](../../docs/images/custom_bundle_infer_task.PNG)
+![Example Image](../../docs/images/custom_active_learning_strategy.PNG)
 
 Technically, we also get rid of some other unnecessary stuff that I believe is related to uncertainty but otherwise is the same.
 
