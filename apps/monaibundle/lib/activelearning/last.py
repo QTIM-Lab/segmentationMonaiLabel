@@ -28,6 +28,8 @@ class Last(Strategy):
         super().__init__("Get Last Sample")
 
     def __call__(self, request, datastore: Datastore):
+        # source code for get_unlabeled_images and get_labeled_images:
+        # https://docs.monai.io/projects/label/en/latest/_modules/monailabel/interfaces/datastore.html#Datastore
         unlabeled_images = datastore.get_unlabeled_images()
         labeled_images = datastore.get_labeled_images()
         
@@ -41,6 +43,8 @@ class Last(Strategy):
         label = None
         if random_choice in labeled_images:
             # get label
+            # in this case, we don't need a label, so we just print so python doesn't crash but can maintain
+            # the code structure...
             print('hi')
         
         return {

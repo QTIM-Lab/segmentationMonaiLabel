@@ -33,17 +33,21 @@ These constraints ensure that any MONAI Bundle used with MONAI Label is compatib
 
 A general main.py file is described best by the tutorial/overview here: [https://github.com/Project-MONAI/tutorials/blob/main/monailabel/design_and_develop_MONAILabel_app_monaibundle_example.md](https://github.com/Project-MONAI/tutorials/blob/main/monailabel/design_and_develop_MONAILabel_app_monaibundle_example.md)
 
-Our main.py differs in the following ways:
+Our main.py only differs in 3 ways:
 
 1. [Custom BundleInferTask, SegmentationBundleInferTask](lib/infers)
+
+![Example Image](../../docs/images/custom_bundle_infer_task.PNG)
 
 2. [Custom BundleTrainTask, SegmentationBundleTrainTask](lib/trainers)
 
 ![Example Image](../../docs/images/custom_bundle_train_task.PNG)
 
-3. [Custom (output) Writer, segmentation_writer](lib/writers)
+3. [Custom activelearning Strategy, last (random)](lib/activelearning)
 
-4. [Custom activelearning Strategy, last (random)](lib/activelearning)
+![Example Image](../../docs/images/custom_bundle_infer_task.PNG)
+
+Technically, we also get rid of some other unnecessary stuff that I believe is related to uncertainty but otherwise is the same.
 
 ## Potential Future Changes
 
