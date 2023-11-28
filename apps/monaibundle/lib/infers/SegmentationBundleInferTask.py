@@ -143,7 +143,6 @@ class SegmentationBundleInferTask(BundleInferTask):
             td_transforms.Normalize(mean=[0.522, 0.300, 0.167], std=[0.240, 0.189, 0.147])
             # td_transforms.Normalize(mean=[0.524, 0.301, 0.169], std=[0.240, 0.190, 0.148]) # Train statistics (no val!)
         ])
-
         data_image = Image.open(data['image']).convert('RGB')
         data['image'] = test_transform(data_image)
 
@@ -158,6 +157,7 @@ class SegmentationBundleInferTask(BundleInferTask):
             data = self.run_detector(data, device=device)
         else:
             data = self.run_inferer(data, device=device)
+            print(f"run_inferer data returned: \n\n{data}\n\n")
 
         if callback_run_inferer:
             data = callback_run_inferer(data)
