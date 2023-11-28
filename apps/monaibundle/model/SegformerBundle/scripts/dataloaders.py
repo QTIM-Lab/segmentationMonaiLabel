@@ -42,9 +42,9 @@ class CustomDataset(Dataset):
         # Mask prints 254's instead of 255's, hence round. Still worrying
         # mask = torch.round(self.mask_transform(mask)[[2,1,0], :, :])
         # mask = self.mask_transform(mask)[[2,1,0], :, :]
-        mask = self.mask_transform(mask)
+        mask = torch.round(self.mask_transform(mask))
         # mask = self.mask_transform(mask)
-        # print("MASK: ", mask)
+        print("MASK: ", mask)
         # Image may be altered
         if self.transform:
             image = self.transform(image_original)

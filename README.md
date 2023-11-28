@@ -84,7 +84,7 @@ npm start
 
 ## Web Deployment
 
-The following describes how to deploy the (unsecured, development) application to web. It is not secure because it does not use HTTPS, or even any sort of user authentication. For this reason, only public, non-PHI data should be used for the until you secure your application under a different procedure.
+The following describes how to deploy the (unsecured, development) application to web. It is not secure because it does not use HTTPS, or even any sort of user authentication. For this reason, only public, non-PHI data should be used for the server until you secure your application under a different procedure.
 
 MONAI Label API Server:
 

@@ -24,7 +24,7 @@ const AddLabelArea = (props) => {
     console.log("data: ", imageData)
   
     // Define the URL and headers
-    const url = `http://34.91.126.112:8000/datastore/label?image=${props.imgId}&tag=final`;
+    const url = `http://localhost:8000/datastore/label?image=${props.imgId}&tag=final`;
     const headers = {
       'Accept': 'application/json',
     };
