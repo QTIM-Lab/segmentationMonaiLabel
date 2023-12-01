@@ -1,4 +1,4 @@
-d # MONAI Label for Segmentation
+# MONAI Label for Segmentation
 
 This repo shows an example of a MONAI Label (API) Server backend with a React app frontend.
 
