@@ -1,4 +1,4 @@
-# MONAI Label for Segmentation
+d # MONAI Label for Segmentation
 
 This repo shows an example of a MONAI Label (API) Server backend with a React app frontend.
 
@@ -78,6 +78,12 @@ React Frontend:
 # if haven't already...
 git clone https://github.com/QTIM-Lab/segmentationMonaiLabel.git
 cd segmentationMonaiLabel/frontend
+# Use nvm and you don't need sudo -> https://github.com/nvm-sh/nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+nvm install 20.8.0 # Install npm version 20.8.0
+## Also the first time you run you won't have pre-trained model "nvidia/mit-b5".
+## Make sure you set local_files_only=True in apps/monaibundle/model/SegformerBundle/scripts/net.py
+## on your first run and then reset to False afterwards. You will need to download initially.
 npm i
 npm start
 ```
