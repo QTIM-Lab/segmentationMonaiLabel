@@ -62,14 +62,14 @@ pyenv shell 3.9.13
 # Update wheel and pip (good practice and specified by MONAI Label installation docs)
 pip install --upgrade pip setuptools wheel
 # Install python requirements if not already
-pip install -r apps/requirements.txt
+pip install -r apps/monaibundle/requirements.txt
 
 # Check CUDA is working...
 python -c "import torch; print(torch.cuda.is_available())"
 
 # Launch the server with the IntegrationBundle and the SegformerBundle
 # (erase IntegrationBundle if don't want, only need Segformer for segmentation)
-monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle --conf zoo_source ngc
+monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
 ```
 
 React Frontend:
@@ -78,13 +78,19 @@ React Frontend:
 # if haven't already...
 git clone https://github.com/QTIM-Lab/segmentationMonaiLabel.git
 cd segmentationMonaiLabel/frontend
+# Use nvm and you don't need sudo -> https://github.com/nvm-sh/nvm
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.5/install.sh | bash
+nvm install 20.8.0 # Install npm version 20.8.0
+## Also the first time you run you won't have pre-trained model "nvidia/mit-b5".
+## Make sure you set local_files_only=True in apps/monaibundle/model/SegformerBundle/scripts/net.py
+## on your first run and then reset to False afterwards. You will need to download initially.
 npm i
 npm start
 ```
 
 ## Web Deployment
 
-The following describes how to deploy the (unsecured, development) application to web. It is not secure because it does not use HTTPS, or even any sort of user authentication. For this reason, only public, non-PHI data should be used for the until you secure your application under a different procedure.
+The following describes how to deploy the (unsecured, development) application to web. It is not secure because it does not use HTTPS, or even any sort of user authentication. For this reason, only public, non-PHI data should be used for the server until you secure your application under a different procedure.
 
 MONAI Label API Server:
 

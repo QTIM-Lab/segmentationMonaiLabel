@@ -8,7 +8,7 @@ const ShowInferenceArea = (props) => {
   
     const handleClick = () => {  
       // Define the URL and headers
-      const url = 'http://34.91.126.112:8000/infer/SegformerBundle?image=' + props.imgId + '&output=image';
+      const url = 'http://localhost:8000/infer/SegformerBundle?image=' + props.imgId + '&output=image';
       const headers = {
         'Accept': 'application/json',
       };

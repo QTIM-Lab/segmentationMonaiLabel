@@ -10,3 +10,4 @@
 # limitations under the License.
 
 from .SegmentationBundleTrainTask import SegmentationBundleTrainTask
+from .MedSamBundleTrainTask import MedSamBundleTrainTask

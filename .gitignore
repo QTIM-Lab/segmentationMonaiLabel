@@ -1,6 +1,10 @@
+# models
 *.pt
 *.pth
 *.ts
+
+# pyenv
+.python-version
 
 __pycache__/
 

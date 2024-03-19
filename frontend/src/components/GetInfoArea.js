@@ -6,7 +6,7 @@ const GetInfoArea = () => {
 
   const handleClick = () => {
     // Define the URL and headers
-    const url = 'http://34.91.126.112:8000/info/';
+    const url = 'http://localhost:8000/info/';
     const headers = {
       'Accept': 'application/json',
     };

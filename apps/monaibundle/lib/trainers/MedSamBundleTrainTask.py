@@ -1,4 +1,4 @@
-
+import pdb
 import glob
 import json
 import logging
@@ -23,7 +23,7 @@ from monailabel.tasks.train.bundle import BundleConstants, BundleTrainTask
 
 logger = logging.getLogger(__name__)
 
-class SegmentationBundleTrainTask(BundleTrainTask):
+class MedSamBundleTrainTask(BundleTrainTask):
     def __init__(
         self,
         path: str,
@@ -44,7 +44,7 @@ class SegmentationBundleTrainTask(BundleTrainTask):
 
     def _partition_datalist(self, datalist, request, shuffle=False):
         val_split = request.get("val_split", 0.2)
-        val_split = 0
+        val_split = 0 # Different than BundleTrainTask._partition_datalist
         logger.info(f"Total Records in Dataset: {len(datalist)}; Validation Split: {val_split}")
 
         if val_split > 0.0:
@@ -58,12 +58,12 @@ class SegmentationBundleTrainTask(BundleTrainTask):
         logger.info(f"Total Records for Training: {len(train_datalist)}")
         logger.info(f"Total Records for Validation: {len(val_datalist) if val_datalist else ''}")
         return train_datalist, val_datalist
+    
 
     def __call__(self, request, datastore: Datastore):
         logger.info(f"Train Request: {request}")
-        print(f"datastore: \n\n\n{datastore}\n\n\n")
-        print(f"datastore.datalist(): \n\n\n{datastore.datalist()}\n\n\n")
         ds = self._fetch_datalist(request, datastore)
+        # [{'image': '/sddata/projects/segmentationMonaiLabel/datastore/visivite_GA.png', 'label': '/sddata/projects/segmentationMonaiLabel/datastore/labels/final/visivite_GA.png'}, {'image': '/sddata/projects/segmentationMonaiLabel/datastore/76_year_old_GA.png', 'label': '/sddata/projects/segmentationMonaiLabel/datastore/labels/final/76_year_old_GA.png'}, {'image': '/sddata/projects/segmentationMonaiLabel/datastore/Fundus_photograph_of_Geographic_atrophy.png', 'label': '/sddata/projects/segmentationMonaiLabel/datastore/labels/final/Fundus_photograph_of_Geographic_atrophy.png'}]
         train_ds, val_ds = self._partition_datalist(ds, request)
 
         max_epochs = request.get("max_epochs", 50)
@@ -71,18 +71,19 @@ class SegmentationBundleTrainTask(BundleTrainTask):
         multi_gpu = request.get("multi_gpu", True)
         force_multi_gpu = request.get("force_multi_gpu", False)
         run_id = request.get("run_id", "run")
+        # Sample Request Body
+        # {"val_split": 0.3, "run_id": "0001", "gpus": "0"}
 
-        # multi_gpu = multi_gpu if torch.cuda.device_count() > 1 else False
-        multi_gpu = False
+        multi_gpu = multi_gpu if torch.cuda.device_count() > 1 else False
 
-        gpus = request.get("gpus", "all")
+        gpus = request.get("gpus", "0") #  # Different than BundleTrainTask: gpus = request.get("gpus", "all")
         gpus = list(range(torch.cuda.device_count())) if gpus == "all" else [int(g) for g in gpus.split(",")]
         multi_gpu = True if force_multi_gpu or multi_gpu and len(gpus) > 1 else False
         logger.info(f"Using Multi GPU: {multi_gpu}; GPUS: {gpus}")
         logger.info(f"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}")
 
-        device = name_to_device(request.get("device", "cpu"))
-        # device = name_to_device(request.get("device", "cuda"))
+        # device = name_to_device(request.get("device", "cpu"))
+        device = name_to_device(request.get("device", "cuda"))
         logger.info(f"Using device: {device}; Type: {type(device)}")
 
         tracking = request.get(
@@ -189,6 +190,7 @@ class SegmentationBundleTrainTask(BundleTrainTask):
             sys.path.insert(0, self.bundle_path)
             unload_module("scripts")
             print("\n\n\nRUN SINGLE GPU\n\n\n")
+            pdb.set_trace()
             self.run_single_gpu(request, overrides)
 
         sys.path.remove(self.bundle_path)

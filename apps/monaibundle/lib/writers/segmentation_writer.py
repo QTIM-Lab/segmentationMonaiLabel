@@ -1,3 +1,4 @@
+import pdb
 from typing import Any, Dict, Iterable, List, Optional, Tuple
 import tempfile
 import numpy as np
@@ -15,8 +16,10 @@ logger = logging.getLogger(__name__)
 def write_cv2(image_np, output_file, dtype):
     if isinstance(image_np, torch.Tensor):
         image_np = image_np.numpy()
-    
     # Ensure that the data shape is [classes, height, width]
+    if len(image_np.shape) == 4: # SUPER HACKY | FOR MedSAM -BB
+        image_np = np.squeeze(image_np, axis=1)
+
     if len(image_np.shape) == 3:
         image_np = image_np.transpose(1, 2, 0)
 
@@ -25,7 +28,12 @@ def write_cv2(image_np, output_file, dtype):
 
     # Create a 8-bit image (adjust the data type as needed)
     image_np = np.uint8(image_np * 255)
+    image_np[image_np > int(255/2)] = 255
+    image_np[image_np <= int(255/2)] = 0
+    
 
+    
+    pdb.set_trace()
     # Save the image using OpenCV
     cv2.imwrite(output_file, image_np)
 
@@ -33,7 +41,8 @@ def write_cv2(image_np, output_file, dtype):
 class SegmentationWriter:
     def __init__(
         self,
-        label="pred",
+        label="pred",# SK
+        # label="probs",# BB
         json=None,
         ref_image=None,
         key_extension="result_extension",
@@ -63,7 +72,7 @@ class SegmentationWriter:
         dtype = data.get(self.key_dtype, None)
         # compress = data.get(self.key_compress, False)
         write_to_file = data.get(self.key_write_to_file, True)
-
+        
         ext = data.get(self.key_extension) if data.get(self.key_extension) else ext
         write_to_file = write_to_file if ext else False
         logger.info(f"Result ext: {ext}; write_to_file: {write_to_file}; dtype: {dtype}")
@@ -73,20 +82,21 @@ class SegmentationWriter:
         else:
             image_np = data[self.label]
 
+        
         # Always using Restored as the last transform before writing
         meta_dict = data.get(f"{self.ref_image}_{self.meta_key_postfix}")
         affine = meta_dict.get("affine") if meta_dict else None
         if affine is None and isinstance(data[self.ref_image], MetaTensor):
             affine = data[self.ref_image].affine
 
-        logger.debug(f"Image: {image_np.shape}; Data Image: {data[self.label].shape}")
+        logger.debug(f"Image: {data['image'].shape}; Data Image: {image_np.shape}")
 
         output_file = None
         output_json = data.get(self.json, {})
         if write_to_file:
             output_file = tempfile.NamedTemporaryFile(suffix=ext).name
             logger.debug(f"Saving Image to: {output_file}")
-
+            
             write_cv2(image_np, output_file, dtype)
 
             # if self.is_multichannel_image(image_np):
