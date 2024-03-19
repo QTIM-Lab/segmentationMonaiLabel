@@ -29,8 +29,12 @@ from monailabel.tasks.train.bundle import BundleTrainTask
 from monailabel.utils.others.generic import get_bundle_models, strtobool
 
 from lib.activelearning.last import Last
+# from lib.infers import IntegrationBundleInferTask
 from lib.infers import SegmentationBundleInferTask
 from lib.trainers import SegmentationBundleTrainTask
+from lib.infers import MedSamBundleInferTask
+from lib.trainers import MedSamBundleTrainTask
+
 
 logger = logging.getLogger(__name__)
 
@@ -63,8 +67,12 @@ class SegmentationApp(MONAILabelApp):
         # Models
         #################################################
         for n, b in self.models.items():
-            # i = BundleInferTask(b, self.conf)
-            i = SegmentationBundleInferTask(b, self.conf)
+            if n == 'SegformerBundle':
+                i = SegmentationBundleInferTask(b, self.conf)
+            elif n == 'MedSamBundle':
+                i = MedSamBundleInferTask(b, self.conf)
+            else:
+                i = BundleInferTask(b, self.conf)
             logger.info(f"+++ Adding Inferer:: {n} => {i}")
             infers[n] = i
         return infers
@@ -77,7 +85,15 @@ class SegmentationApp(MONAILabelApp):
         for n, b in self.models.items():
             print("conf: ", self.conf)
             # t = BundleTrainTask(b, self.conf)
-            t = SegmentationBundleTrainTask(b, self.conf)
+            print(f"\n\n\n {n} {b} \n\n\n")
+            if n == 'SegformerBundle':
+                # import pdb; pdb.set_trace()
+                t = SegmentationBundleTrainTask(b, self.conf)
+            elif n == 'MedSamBundle':
+                # import pdb; pdb.set_trace()
+                t = MedSamBundleTrainTask(b, self.conf)
+            else:
+                t = BundleTrainTask(b, self.conf)
             if not t or not t.is_valid():
                 continue
 

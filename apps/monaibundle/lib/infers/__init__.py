@@ -10,3 +10,4 @@
 # limitations under the License.
 
 from .SegmentationBundleInferTask import SegmentationBundleInferTask
+from .MedSamBundleInferTask import MedSamBundleInferTask

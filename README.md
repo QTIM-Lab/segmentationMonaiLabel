@@ -69,7 +69,7 @@ python -c "import torch; print(torch.cuda.is_available())"
 
 # Launch the server with the IntegrationBundle and the SegformerBundle
 # (erase IntegrationBundle if don't want, only need Segformer for segmentation)
-monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle --conf zoo_source ngc
+monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
 ```
 
 React Frontend:

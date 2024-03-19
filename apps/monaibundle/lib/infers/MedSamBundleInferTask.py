@@ -1,3 +1,4 @@
+import pdb
 import copy
 import logging
 import os
@@ -6,7 +7,7 @@ from abc import abstractmethod
 from enum import Enum
 from typing import Any, Callable, Dict, List, Optional, Sequence, Tuple, Union
 
-import torch
+import torch, numpy as np
 from monai.data import decollate_batch
 from monai.inferers import Inferer, SimpleInferer, SlidingWindowInferer
 from monai.utils import deprecated
@@ -29,14 +30,14 @@ import sys
 from monai.transforms import Compose, LoadImaged
 
 from monailabel.transform.pre import LoadImageTensord
-import torchvision.transforms as td_transforms
+
 
 from PIL import Image
 
 logger = logging.getLogger(__name__)
 
 
-class SegmentationBundleInferTask(BundleInferTask):
+class MedSamBundleInferTask(BundleInferTask):
     """
     This provides Inference Engine for pre-trained model over Multi Atlas Labeling Beyond The Cranial Vault (BTCV)
     dataset.
@@ -82,7 +83,9 @@ class SegmentationBundleInferTask(BundleInferTask):
         :return: tuple of output_file and result_json
         """
         logger.info("Writing Result...")
-        writer_obj = SegmentationWriter(label=self.output_label_key)
+
+        # writer_obj = SegmentationWriter(label=self.output_label_key)#SK
+        writer_obj = SegmentationWriter(label='probs')#BB
         return writer_obj(data)
 
     def __call__(
@@ -106,7 +109,7 @@ class SegmentationBundleInferTask(BundleInferTask):
         req.update(request)
 
         # device
-        # import pdb; pdb.set_trace()
+        # pdb.set_trace()
         # device = name_to_device(req.get("device", "cuda"))
         device = name_to_device('cpu')
         print(f"\n\n\n\n DEVICE: {device} \n\n\n\n")
@@ -139,18 +142,21 @@ class SegmentationBundleInferTask(BundleInferTask):
         # print("data after transforms: ", data)
 
 
-        test_transform = td_transforms.Compose([
-            # monai.transforms.LoadImage(image_only=True),
-            td_transforms.ToTensor(),
-            td_transforms.Resize((512,512)),
-            td_transforms.Normalize(mean=[0.522, 0.300, 0.167], std=[0.240, 0.189, 0.147])
-            # td_transforms.Normalize(mean=[0.524, 0.301, 0.169], std=[0.240, 0.190, 0.148]) # Train statistics (no val!)
-        ])
-        data_image = Image.open(data['image']).convert('RGB')
-        data['image'] = test_transform(data_image)
+        # test_transform = td_transforms.Compose([
+        #     # monai.transforms.LoadImage(image_only=True),
+        #     td_transforms.ToTensor(),
+        #     # td_transforms.Resize((512,512)),
+        #     # td_transforms.Normalize(mean=[0.522, 0.300, 0.167], std=[0.240, 0.189, 0.147])
+        #     # td_transforms.Normalize(mean=[0.524, 0.301, 0.169], std=[0.240, 0.190, 0.148]) # Train statistics (no val!)
+        # ])
+        # data_image = Image.open(data['image']).convert('RGB') # SK - segformer
+        data_image = Image.open(data['image']) # BB
+        # data['image'] = test_transform(data_image)
+        data['image'] = np.array(data_image)
 
-        print("data after transforms: ", data)
-
+        # print("data shape : ", data['image'].shape)
+        # print("data : ", data['image'])
+        # pdb.set_trace()
         if callback_run_pre_transforms:
             data = callback_run_pre_transforms(data)
         latency_pre = time.time() - start
@@ -159,6 +165,7 @@ class SegmentationBundleInferTask(BundleInferTask):
         if self.type == InferType.DETECTION:
             data = self.run_detector(data, device=device)
         else:
+            # pdb.set_trace()
             data = self.run_inferer(data, device=device)
             print(f"run_inferer data returned: \n\n{data}\n\n")
 
@@ -166,11 +173,15 @@ class SegmentationBundleInferTask(BundleInferTask):
             data = callback_run_inferer(data)
         latency_inferer = time.time() - start
 
+        
+
         start = time.time()
         data = self.run_invert_transforms(data, pre_transforms, self.inverse_transforms(data))
         if callback_run_invert_transforms:
             data = callback_run_invert_transforms(data)
         latency_invert = time.time() - start
+        
+        
 
         start = time.time()
         data = self.run_post_transforms(data, self.post_transforms(data))
@@ -182,7 +193,11 @@ class SegmentationBundleInferTask(BundleInferTask):
             return dict(data)
 
         start = time.time()
+
+        # pdb.set_trace()
+
         result_file_name, result_json = self.writer(data)
+        
         if callback_writer:
             data = callback_writer(data)
         latency_write = time.time() - start
@@ -225,4 +240,5 @@ class SegmentationBundleInferTask(BundleInferTask):
         if result_file_name is not None and isinstance(result_file_name, str):
             logger.info(f"Result File: {result_file_name}")
         logger.info(f"Result Json Keys: {list(result_json.keys())}")
+        
         return result_file_name, result_json
