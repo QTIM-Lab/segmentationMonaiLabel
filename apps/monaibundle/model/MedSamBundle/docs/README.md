@@ -67,6 +67,9 @@ I think MONAI normalization was acting SLIGHTLY different in normalization trans
 Describe your model here and how to run it, for example using `metadata.json` and `train.yaml`:
 
 ```
+# If using segmentationMonaiLabel git project
+# cd apps/monaibundle/model
+
 # convenient to define the bundle's root in a variable
 BUNDLE="./MedSamBundle"
 
