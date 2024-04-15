@@ -1,37 +1,84 @@
 imports:
 - $import torch
+- $from tqdm import tqdm
+- $import monai
 - $import scripts
-- $import scripts.net
 - $import scripts.train
-- $import scripts.transforms
-- $import scripts.dataloaders
+- $from transformers import SamProcessor
+- $from transformers import SamModel
+- $from scripts.dataset import SAMDataset
+- $from scripts.net import MedSamNet
 
-bundle_root: ./model/MedSamBundle
-# ckpt_path: $@bundle_root + '/models/model_trained.pt'
-weights_path: $@bundle_root + '/models/model_orig.pt'
-ckpt_output_path: $@bundle_root + '/models/model.pt'
+device: '$"cuda" if torch.cuda.is_available() else "cpu"'
 
-net:
-  _target_: scripts.net.MyCustomNet
+processor: '$SamProcessor.from_pretrained("facebook/sam-vit-base")'
 
-# pretrained_weights_path: 
+dataloader: $torch.utils.data.DataLoader
 
-transforms: 'scripts.custom_post_transform.CustomPostTransform'
+test_tensor: '$torch.rand(*[4,4]).to(@device)'
 
-# dataloader: '$scripts.dataloaders.get_dataloader(True, @transforms)'
-dataloader: '$scripts.dataloaders.datastore_dataloader(@train#dataset#data, @validate#dataset#data, @transforms)'
+
+network_def:
+  _target_: scripts.net.MedSamNet
+
+# Tests
+test_config:
+- '$monai.config.print_config()'
+- '$print("Test tensor:", @test_tensor)'
+
+test_dataset:
+- '$print("--- DATASET DEBUG ---")'
+- '$print(f"Dataset : {@dataset_csv}")'
+- '$print(f"Processor: {@processor}")'
+- '$print(f"Dataset length:  {@dataset.__len__()}")'
+- '$print(f"__get_item__:  {@dataset.__getitem__(0)}")'
+
+test_dataloader:
+- '$print("--- DATALOADER DEBUG ---")'
+- '$print([batch["input_boxes"] for batch in tqdm(@dataloader(@dataset, batch_size=3, shuffle=True))])'
+
+# Run
+infer:
+- $scripts.infer.infer()
 
 train:
   trainer:
     max_epochs: 3
   dataset:
     data: []
+  
 
 validate:
   dataset:
     data: []
 
+# dataset:
+#   _target_: $SAMDataset
+#   dataset: '@dataset_csv'
+#   processor: '@processor'
+#   mode: 'train'
+
+dataset:
+  _target_: $SAMDataset
+  dataset: '@train#dataset#data'
+  processor: '@processor'
+
+
+bundle_root: /sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle
+weights_path: $@bundle_root + '/models/model_best.pt'
+sam_model: '$SamModel.from_pretrained("facebook/sam-vit-base")'
+
 run:
-  - '$print("WORKS!")'
-# - $scripts.train.train(@net, @weights_path, @dataloader)
-# - $torch.save(@net.state_dict(), @ckpt_output_path)
+# - $@sam_model.load_state_dict(torch.load(@weights_path)) # continue fine tuning
+- $scripts.train.train(@sam_model, @device, @weights_path, @dataloader(@dataset, batch_size=1, shuffle=False))
+
+## Staged for delete  ##
+transforms: 'scripts.custom_post_transform.CustomPostTransform'
+# - $import scripts.net
+# - $import scripts.transforms
+# - $import scripts.dataloaders
+# ckpt_path: $@bundle_root + '/models/model_trained.pt'
+# pretrained_weights_path: 
+# ckpt_output_path: $@bundle_root + '/models/model.pt'
+# net:
+#   _target_: scripts.net.MyCustomNet

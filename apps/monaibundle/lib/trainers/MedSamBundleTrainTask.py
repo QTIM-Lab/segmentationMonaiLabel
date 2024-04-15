@@ -73,7 +73,7 @@ class MedSamBundleTrainTask(BundleTrainTask):
         run_id = request.get("run_id", "run")
         # Sample Request Body
         # {"val_split": 0.3, "run_id": "0001", "gpus": "0"}
-
+        multi_gpu = False # BB
         multi_gpu = multi_gpu if torch.cuda.device_count() > 1 else False
 
         gpus = request.get("gpus", "0") #  # Different than BundleTrainTask: gpus = request.get("gpus", "all")
@@ -81,7 +81,7 @@ class MedSamBundleTrainTask(BundleTrainTask):
         multi_gpu = True if force_multi_gpu or multi_gpu and len(gpus) > 1 else False
         logger.info(f"Using Multi GPU: {multi_gpu}; GPUS: {gpus}")
         logger.info(f"CUDA_VISIBLE_DEVICES: {os.environ.get('CUDA_VISIBLE_DEVICES')}")
-
+        
         # device = name_to_device(request.get("device", "cpu"))
         device = name_to_device(request.get("device", "cuda"))
         logger.info(f"Using device: {device}; Type: {type(device)}")
@@ -107,7 +107,6 @@ class MedSamBundleTrainTask(BundleTrainTask):
         model_pytorch = os.path.join(self.bundle_path, "models", model_filename)
 
         self._load_checkpoint(model_pytorch, pretrained, train_handlers)
-
         overrides = {
             self.const.key_bundle_root(): self.bundle_path,
             self.const.key_train_trainer_max_epochs(): max_epochs,
@@ -137,7 +136,6 @@ class MedSamBundleTrainTask(BundleTrainTask):
 
         # allow derived class to update further overrides
         self._update_overrides(overrides)
-
         if multi_gpu:
             config_paths = [
                 c
@@ -190,7 +188,8 @@ class MedSamBundleTrainTask(BundleTrainTask):
             sys.path.insert(0, self.bundle_path)
             unload_module("scripts")
             print("\n\n\nRUN SINGLE GPU\n\n\n")
-            pdb.set_trace()
+            # pdb.set_trace()
+            # THIS IS THE MONEY...Need to just get monai bundle to run
             self.run_single_gpu(request, overrides)
 
         sys.path.remove(self.bundle_path)

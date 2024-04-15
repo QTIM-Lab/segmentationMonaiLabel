@@ -1,59 +1,61 @@
 imports:
+- $import torch
+- $from tqdm import tqdm
+- $import monai
 - $import scripts
-- $import scripts.net
+- $import scripts.infer
+- $from scripts.inferer import MedSamInferer
+- $import scripts.dataset
 - $import scripts.transforms
-- $from PIL import Image
-#- $import scripts.inference # I don't see this...BB
+- $from transformers import SamProcessor
+- $from transformers import SamModel
+- $from scripts.dataset import SAMDataset
 
-# bundle_root: ./model/MedSamBundle
 
-# ckpt_path: './cifar_net.pth'
+device: '$"cuda" if torch.cuda.is_available() else "cpu"'
 
-# input_dir: 'test_cifar10'
-# input_files: '$sorted(glob.glob(@input_dir+''/*.*''))'
+processor: '$SamProcessor.from_pretrained("facebook/sam-vit-base")'
 
-# device: '$torch.device(''cuda:0'')'
+dataset:
+  _target_: $SAMDataset
+  dataset: '/sddata/projects/segmentationMonaiLabel/datastore/visivite_GA.png'
+  processor: '@processor'
+  mode: 'infer'
+  # dataset: '@dataset_csv'
 
-dropout: 0.1
+pre_transforms: $SAMDataset
 
-# net:
-#   _target_: scripts.net.MyCustomNet
+dataloader: $torch.utils.data.DataLoader
+
+test_tensor: '$torch.rand(*[4,4]).to(@device)'
+
+model: '$SamModel.from_pretrained("facebook/sam-vit-base")'
 
 network_def:
-  _target_: scripts.net.MyCustomNet
+  _target_: scripts.net.MedSamNet
 
-# transforms: '$scripts.transforms.transform'
+# Tests
+test_config:
+- '$monai.config.print_config()'
+- '$print("Test tensor:", @test_tensor)'
 
-image: $monai.utils.CommonKeys.IMAGE
-pred: $monai.utils.CommonKeys.PRED
+test_dataset:
+- '$print("--- DATASET DEBUG ---")'
+- '$print(f"Dataset : {@dataset_csv}")'
+- '$print(f"Processor: {@processor}")'
+- '$print(f"Dataset length:  {@dataset.__len__()}")'
+- '$print(f"__get_item__:  {@dataset.__getitem__(0)}")'
 
-# pre_transforms: '$scripts.transforms.test_transform'
+test_dataloader:
+- '$print("--- DATALOADER DEBUG ---")'
+- '$print([batch["input_boxes"] for batch in tqdm(@dataloader(@dataset, batch_size=3, shuffle=True))])'
 
-# pre_transforms:
-# - _target_: LoadImaged
-#   keys: '@image'
-#   image_only: true
-# - _target_: EnsureChannelFirstd
-#   keys: 'image'
-# - _target_: Resized
-#   keys: 'image'
-#   spatial_size: [512,512]
-# - _target_: ScaleIntensityd
-#   keys: '@image'
-# - _target_: NormalizeIntensityd
-#   keys: '@image'
-#   subtrahend: [0.522, 0.300, 0.167]
-#   divisor: [0.240, 0.189, 0.147]
-#   channel_wise: True
+# Hand inferer to monailabel
+## Hint line 174-ush in pre_transforms passes mode="infer" to the dataset instance
+inferer:
+  _target_: scripts.inferer.MedSamInferer
 
-# ITS HARD CODED FOR NOW!
-pre_transforms:
-- _target_: LoadImaged
-  keys: '@image'
-  image_only: true
-
-# https://docs.monai.io/en/stable/transforms.html
-# see above and ctrl+f for Activationsd
-post_transforms:
-  - _target_: scripts.custom_post_transform.CustomPostTransform
-    processor_name: SamProcessor
+# Run
+infer:
+# - '$print(@dataset[0])'
+- "$print(@inferer(@dataset, network='MedSamBundle/models/model.pt'))"
