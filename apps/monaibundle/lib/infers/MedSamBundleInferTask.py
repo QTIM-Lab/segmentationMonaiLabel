@@ -23,7 +23,7 @@ from monailabel.tasks.infer.bundle import BundleInferTask, BundleConstants
 from monai.transforms import SaveImaged
 from monailabel.tasks.infer.basic_infer import CallBackTypes
 
-from lib.writers.segmentation_writer import SegmentationWriter
+from lib.writers.MedSamWriter import MedSamWriter
 from monailabel.utils.others.class_utils import unload_module
 import sys
 
@@ -32,9 +32,19 @@ from monai.transforms import Compose, LoadImaged
 from monailabel.transform.pre import LoadImageTensord
 
 
+## BB
+import torchvision
+
+
+
 from PIL import Image
 
 logger = logging.getLogger(__name__)
+
+
+class MedSamBundleConstants(BundleConstants):
+    def key_dataset(self) -> str:
+        return ["dataset"]
 
 
 class MedSamBundleInferTask(BundleInferTask):
@@ -57,6 +67,8 @@ class MedSamBundleInferTask(BundleInferTask):
         load_strict=False,
         **kwargs,
     ):
+        if const is None:
+            const = MedSamBundleConstants()
         
         super().__init__(
             path=path,
@@ -84,13 +96,111 @@ class MedSamBundleInferTask(BundleInferTask):
         """
         logger.info("Writing Result...")
 
-        # writer_obj = SegmentationWriter(label=self.output_label_key)#SK
-        writer_obj = SegmentationWriter(label='probs')#BB
+        writer_obj = MedSamWriter(label='pred')#BB
         return writer_obj(data)
+
+
+    def run_inferer(self, data: Dict[str, Any], convert_to_batch=True, device="cuda"):
+        """
+        Run Inferer over pre-processed Data.  Derive this logic to customize the normal behavior.
+        In some cases, you want to implement your own for running chained inferers over pre-processed data
+
+        :param data: pre-processed data
+        :param convert_to_batch: convert input to batched input
+        :param device: device type run load the model and run inferer
+        :return: updated data with output_key stored that will be used for post-processing
+        """
+
+        inferer = self.inferer(data) # grabs the inferer and returns it - BB
+        # pdb.set_trace()
+        logger.info(f"Inferer:: {device} => {inferer.__class__.__name__} => {inferer.__dict__}")
+
+        network = self._get_network(device, data)
+        if network:
+            inputs = data[self.input_key]
+            # inputs = inputs if torch.is_tensor(inputs) else torch.from_numpy(inputs)
+            # inputs = inputs[None] if convert_to_batch else inputs
+            # inputs = inputs.to(torch.device(device))
+
+            with torch.no_grad():
+                # network(data['image'])
+                # network(network._model, data['device'], data['image'])
+                br = self.bundle_config.get(self.const.key_bundle_root())
+                # network = os.path.join(br, 'models', self.const.model_pytorch())
+                network = os.path.join(br, 'models', 'model_best.pt')
+                # pdb.set_trace()
+                outputs = inferer(inputs, network=network, device=data['device'])
+            # pdb.set_trace()
+
+            if device.startswith("cuda"):
+                torch.cuda.empty_cache()
+
+            if convert_to_batch:
+                if isinstance(outputs, dict):
+                    outputs_d = decollate_batch(outputs)
+                    outputs = outputs_d[0]
+                else:
+                    outputs = outputs[0]
+
+            data[self.output_label_key] = outputs
+        else:
+            # consider them as callable transforms
+            data = run_transforms(data, inferer, log_prefix="INF", log_name="Inferer")
+        return data
+    
+    # from BundleInferTask
+    def pre_transforms(self, data=None) -> Sequence[Callable]:
+        # Update bundle parameters based on user's option
+        for k in self.const.key_displayable_configs():
+            if self.bundle_config.get(k):
+                self.bundle_config[k].update({c: data[c] for c in self.displayable_configs.keys()})
+                self.bundle_config.parse()
+
+
+        sys.path.insert(0, self.bundle_path)
+        unload_module("scripts")
+        self._update_device(data)
+
+        pre = []
+        for k in self.const.key_preprocessing():
+            if self.bundle_config.get(k):
+                c = self.bundle_config.get_parsed_content(k, instantiate=True)
+                if isinstance(c, Compose):
+                    pre = list(c.transforms)
+                elif isinstance(c, torchvision.transforms.Compose):
+                    pre = c.transforms
+                elif isinstance(c(data['image_path']), torch.utils.data.Dataset):
+                    # pdb.set_trace()
+                    pre = c(data['image_path'], mode="infer")
+                else:
+                    pre = c
+
+
+        # pre = self._filter_transforms(pre, self.pre_filter)
+        # for t in pre:
+        #     if isinstance(t, LoadImaged):
+        #         t._loader.image_only = False
+        
+        # if pre and self.extend_load_image:
+        #     res = []
+        #     for t in pre:
+        #         if isinstance(t, LoadImaged):
+        #             res.append(LoadImageTensord(keys=t.keys, load_image_d=t))
+        #         else:
+        #             res.append(t)
+        #     pre = res
+        
+        sys.path.remove(self.bundle_path)
+
+        # pdb.set_trace()
+
+        return pre
+    
 
     def __call__(
         self, request, callbacks: Union[Dict[CallBackTypes, Any], None] = None
     ) -> Union[Dict, Tuple[str, Dict[str, Any]]]:
+
         """
         It provides basic implementation to run the following in order
             - Run Pre Transforms
@@ -109,9 +219,9 @@ class MedSamBundleInferTask(BundleInferTask):
         req.update(request)
 
         # device
-        # pdb.set_trace()
-        # device = name_to_device(req.get("device", "cuda"))
-        device = name_to_device('cpu')
+        device = name_to_device(req.get("device", "cuda"))
+
+        # device = name_to_device('cpu')
         print(f"\n\n\n\n DEVICE: {device} \n\n\n\n")
         req["device"] = device
 
@@ -120,10 +230,11 @@ class MedSamBundleInferTask(BundleInferTask):
             logger.info(f"Infer Request (final): {req}")
             data = copy.deepcopy(req)
             data.update({"image_path": req.get("image")})
+            # /tmp/tmpnhmsopkn.png
+            # [file for file in os.listdir('/tmp') if file.find('.png') != -1]
         else:
             dump_data(req, logger.level)
             data = req
-
         # callbacks useful in case of pipeliens to consume intermediate output from each of the following stages
         # callback function should consume data and returns data (modified/updated)
         callbacks = callbacks if callbacks else {}
@@ -132,56 +243,39 @@ class MedSamBundleInferTask(BundleInferTask):
         callback_run_invert_transforms = callbacks.get(CallBackTypes.INVERT_TRANSFORMS)
         callback_run_post_transforms = callbacks.get(CallBackTypes.POST_TRANSFORMS)
         callback_writer = callbacks.get(CallBackTypes.WRITER)
-
+        
         start = time.time()
-        print("self pre transforms: ", self.pre_transforms)
         pre_transforms = self.pre_transforms(data)
-        print("pre transforms: ", pre_transforms)
-        print("data before transforms: ", data)
-        # data = self.run_pre_transforms(data, pre_transforms)
-        # print("data after transforms: ", data)
-
-
-        # test_transform = td_transforms.Compose([
-        #     # monai.transforms.LoadImage(image_only=True),
-        #     td_transforms.ToTensor(),
-        #     # td_transforms.Resize((512,512)),
-        #     # td_transforms.Normalize(mean=[0.522, 0.300, 0.167], std=[0.240, 0.189, 0.147])
-        #     # td_transforms.Normalize(mean=[0.524, 0.301, 0.169], std=[0.240, 0.190, 0.148]) # Train statistics (no val!)
-        # ])
-        # data_image = Image.open(data['image']).convert('RGB') # SK - segformer
-        data_image = Image.open(data['image']) # BB
-        # data['image'] = test_transform(data_image)
-        data['image'] = np.array(data_image)
-
-        # print("data shape : ", data['image'].shape)
-        # print("data : ", data['image'])
+        # !next(iter(pre_transforms))
+        # pre_transforms.__len__()
+        # pre_transforms
         # pdb.set_trace()
-        if callback_run_pre_transforms:
-            data = callback_run_pre_transforms(data)
+        #######
+        # data = self.run_pre_transforms(data, pre_transforms)
+        # if callback_run_pre_transforms:
+        #     data = callback_run_pre_transforms(data)
         latency_pre = time.time() - start
+        ###############
+        data['image'] =  pre_transforms
 
+        
         start = time.time()
         if self.type == InferType.DETECTION:
             data = self.run_detector(data, device=device)
         else:
             # pdb.set_trace()
-            data = self.run_inferer(data, device=device)
-            print(f"run_inferer data returned: \n\n{data}\n\n")
+            data = self.run_inferer(data, device=device)    
+            # data = self.run_inferer(pre_transforms, device=device)    
 
         if callback_run_inferer:
             data = callback_run_inferer(data)
         latency_inferer = time.time() - start
-
-        
 
         start = time.time()
         data = self.run_invert_transforms(data, pre_transforms, self.inverse_transforms(data))
         if callback_run_invert_transforms:
             data = callback_run_invert_transforms(data)
         latency_invert = time.time() - start
-        
-        
 
         start = time.time()
         data = self.run_post_transforms(data, self.post_transforms(data))
@@ -194,7 +288,7 @@ class MedSamBundleInferTask(BundleInferTask):
 
         start = time.time()
 
-        # pdb.set_trace()
+        print("THIS IS NEW!")
 
         result_file_name, result_json = self.writer(data)
         
@@ -240,5 +334,6 @@ class MedSamBundleInferTask(BundleInferTask):
         if result_file_name is not None and isinstance(result_file_name, str):
             logger.info(f"Result File: {result_file_name}")
         logger.info(f"Result Json Keys: {list(result_json.keys())}")
+        # pdb.set_trace()
         
         return result_file_name, result_json
