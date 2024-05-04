@@ -1,5 +1,6 @@
 import pdb
-import torch
+import torch, numpy as np
+from PIL import Image
 from monai.inferers import SimpleInferer
 from transformers import SamModel, SamProcessor
 
@@ -19,16 +20,25 @@ class MedSamInferer(SimpleInferer):
         input_instance = inputs[0]
         pv = input_instance["pixel_values"]
         ib = input_instance["input_boxes"]
+        pv.shape
+        ib.shape
+        # pdb.set_trace()
         # pv = input_instance["pixel_values"].reshape((1, 3, 1024, 1024))
         # ib = input_instance["input_boxes"].reshape(1, 1, 4)
         outputs = self._model(pixel_values=pv.to(device), input_boxes=ib.to(device), multimask_output=False)
         logits = outputs.pred_masks
         l_sig = logits.sigmoid().cpu()
+        logits.squeeze().max()
         o_s = input_instance["original_sizes"].cpu()
         r_i_s = input_instance["reshaped_input_sizes"].cpu()
         # pdb.set_trace()
         probs = self._processor.image_processor.post_process_masks(l_sig, o_s, r_i_s, binarize=False)
-        binary_mask = (probs[0] > 0.85).int() * 255
+        binary_mask = (probs[0] > 0.45).int() * 255
+        max(probs[0])
+        np.unique(binary_mask)
+        np.unique(probs)
+        # tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
+        # tmp.save("/sddata/projects/segmentationMonaiLabel/tmp_inferer.png")
 
         return binary_mask
 

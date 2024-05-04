@@ -127,6 +127,7 @@ class MedSamBundleInferTask(BundleInferTask):
                 # network(network._model, data['device'], data['image'])
                 br = self.bundle_config.get(self.const.key_bundle_root())
                 # network = os.path.join(br, 'models', self.const.model_pytorch())
+                # pdb.set_trace()
                 network = os.path.join(br, 'models', 'model_best.pt')
                 # pdb.set_trace()
                 outputs = inferer(inputs, network=network, device=data['device'])
@@ -171,7 +172,7 @@ class MedSamBundleInferTask(BundleInferTask):
                     pre = c.transforms
                 elif isinstance(c(data['image_path']), torch.utils.data.Dataset):
                     # pdb.set_trace()
-                    pre = c(data['image_path'], mode="infer")
+                    pre = c(data['image_path'], mode="infer", roi=data['roi'])
                 else:
                     pre = c
 
@@ -224,7 +225,6 @@ class MedSamBundleInferTask(BundleInferTask):
         # device = name_to_device('cpu')
         print(f"\n\n\n\n DEVICE: {device} \n\n\n\n")
         req["device"] = device
-
         logger.setLevel(req.get("logging", "INFO").upper())
         if req.get("image") is not None and isinstance(req.get("image"), str):
             logger.info(f"Infer Request (final): {req}")
@@ -245,10 +245,11 @@ class MedSamBundleInferTask(BundleInferTask):
         callback_writer = callbacks.get(CallBackTypes.WRITER)
         
         start = time.time()
+        # pdb.set_trace()
         pre_transforms = self.pre_transforms(data)
         # !next(iter(pre_transforms))
         # pre_transforms.__len__()
-        # pre_transforms
+        # pre_transforms[0]
         # pdb.set_trace()
         #######
         # data = self.run_pre_transforms(data, pre_transforms)
@@ -258,7 +259,6 @@ class MedSamBundleInferTask(BundleInferTask):
         ###############
         data['image'] =  pre_transforms
 
-        
         start = time.time()
         if self.type == InferType.DETECTION:
             data = self.run_detector(data, device=device)
@@ -266,7 +266,7 @@ class MedSamBundleInferTask(BundleInferTask):
             # pdb.set_trace()
             data = self.run_inferer(data, device=device)    
             # data = self.run_inferer(pre_transforms, device=device)    
-
+        
         if callback_run_inferer:
             data = callback_run_inferer(data)
         latency_inferer = time.time() - start

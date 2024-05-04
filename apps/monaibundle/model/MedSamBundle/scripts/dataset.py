@@ -28,7 +28,12 @@ def get_bounding_box(ground_truth_map):
 
 
 class SAMDataset(Dataset):
-    def __init__(self, dataset, processor=SamProcessor.from_pretrained("facebook/sam-vit-base"), is_grayscale=False, mode="train"):
+    def __init__(self, \
+                 dataset, \
+                 processor=SamProcessor.from_pretrained("facebook/sam-vit-base"), \
+                 is_grayscale=False, \
+                 mode="train", \
+                 roi=None):
         """
         dataset - Path to csv containing paths to dataset.
                   From the python -m monai.bundle run command in README.md
@@ -36,6 +41,7 @@ class SAMDataset(Dataset):
         """
         # pdb.set_trace()
         self.mode = mode
+        self.roi = roi
         if isinstance(dataset, list):
             self.dataset = dataset
             self.input = "datastore"            
@@ -107,11 +113,21 @@ class SAMDataset(Dataset):
             label = self._load_image(label, is_grayscale=True)
             label = (label > 0).float()
 
-        prompt = get_bounding_box(label.squeeze())
+
+        if self.roi is not None:
+            prompt = self.roi
+        else:
+            prompt = get_bounding_box(label.squeeze())
+
+        
         # prepare image and prompt for the model
         print(image.min(), image.max())
         # pdb.set_trace()
+        
         # prompt = [600, 600, 1400, 1400]
+        # tmp = Image.fromarray(np.uint8(image)).convert('RGB')
+        # tmp = Image.fromarray(np.uint8(label)).convert('RGB')
+        # tmp.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
         inputs = self.processor(image, input_boxes=[[prompt]], return_tensors="pt")
 
         # remove batch dimension which the processor adds by default

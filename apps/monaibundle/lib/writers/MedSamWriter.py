@@ -214,9 +214,15 @@ class MedSamWriter:
                 write_nifti(image_np, output_file, affine=affine, output_dtype=dtype)
             else:
                 # import pdb; pdb.set_trace()
-                image_np = image_np.squeeze(0).permute(0, 1).byte().numpy()
-                pil_image = Image.fromarray(image_np)
+                image_np = image_np.squeeze(0).numpy().astype(np.uint8)
+                np.unique(image_np)
+                R = image_np
+                G = np.zeros_like(image_np)
+                B = np.zeros_like(image_np)
+                rgb_image = np.stack([R,G,B], axis=-1)
+                pil_image = Image.fromarray(rgb_image, mode='RGB')
                 pil_image.save(output_file)
+                pil_image.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
                 # write_itk(image_np, output_file, affine if len(image_np.shape) > 2 else None, dtype, compress)
         else:
             output_file = image_np
