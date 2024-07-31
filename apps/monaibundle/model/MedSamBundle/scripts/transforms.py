@@ -11,10 +11,11 @@ class MedSamTransform(transforms.Compose):
         self.is_grayscale = is_grayscale
         self.resize = resize
         transformations = [
-            transforms.Resize(resize),
-            transforms.Grayscale() if is_grayscale else transforms.Lambda(lambda x: x),
-            # transforms.ToTensor() # it will convert to tensor and scale between 0-1
-            transforms.Lambda(lambda x: torch.from_numpy(np.array(x))),
+            transforms.Resize(self.resize),
+            # transforms.Grayscale() if is_grayscale else transforms.Lambda(lambda x: x),
+            transforms.ToTensor(), # it will convert to tensor and scale between 0-1
+            transforms.Normalize(mean=[0, 0, 0], std=[1, 1, 1])
+            # transforms.Lambda(lambda x: torch.from_numpy(np.array(x))),
         ] 
         
         super().__init__(transformations)

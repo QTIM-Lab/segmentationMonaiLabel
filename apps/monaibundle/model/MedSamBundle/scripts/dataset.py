@@ -30,7 +30,7 @@ def get_bounding_box(ground_truth_map):
 class SAMDataset(Dataset):
     def __init__(self, \
                  dataset, \
-                 processor=SamProcessor.from_pretrained("facebook/sam-vit-base"), \
+                 processor=SamProcessor.from_pretrained("flaviagiammarino/medsam-vit-base"), \
                  is_grayscale=False, \
                  mode="train", \
                  roi=None):
@@ -122,13 +122,15 @@ class SAMDataset(Dataset):
         
         # prepare image and prompt for the model
         print(image.min(), image.max())
+        image.shape
         # pdb.set_trace()
         
         # prompt = [600, 600, 1400, 1400]
         # tmp = Image.fromarray(np.uint8(image)).convert('RGB')
         # tmp = Image.fromarray(np.uint8(label)).convert('RGB')
         # tmp.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
-        inputs = self.processor(image, input_boxes=[[prompt]], return_tensors="pt")
+        prompt = [0, 0, image.shape[1], image.shape[2]]
+        inputs = self.processor([image], input_boxes=[[prompt]], return_tensors="pt", do_rescale=False)
 
         # remove batch dimension which the processor adds by default
         # inputs.keys()        

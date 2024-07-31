@@ -15,13 +15,22 @@ class MedSamInferer(SimpleInferer):
         self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base", local_files_only=False)
         self._processor = SamProcessor.from_pretrained("flaviagiammarino/medsam-vit-base")
 
-    def forward(self, inputs, device):
+    def forward(self, inputs, device, trained=True):
+        if trained:
+            model_ckpt_path = "/sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle/models/epoch=20-step=210.ckpt"
+            raw_torch_load = torch.load(model_ckpt_path)
+             # Create a new state dictionary with updated keys
+            new_state_dict = {key.replace("model.", ""): value for key, value in raw_torch_load['state_dict'].items()}
+            self._model.load_state_dict(state_dict = new_state_dict, strict=True)
+        else:
+            self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base")
         self._model.to(device) 
+        pdb.set_trace()
         input_instance = inputs[0]
         pv = input_instance["pixel_values"]
         ib = input_instance["input_boxes"]
-        pv.shape
-        ib.shape
+        # ib = [0, 0, list(pv.shape)[2], list(pv.shape)[3]]
+        # pv.shape
         # pdb.set_trace()
         # pv = input_instance["pixel_values"].reshape((1, 3, 1024, 1024))
         # ib = input_instance["input_boxes"].reshape(1, 1, 4)
@@ -34,6 +43,8 @@ class MedSamInferer(SimpleInferer):
         # pdb.set_trace()
         probs = self._processor.image_processor.post_process_masks(l_sig, o_s, r_i_s, binarize=False)
         binary_mask = (probs[0] > 0.45).int() * 255
+        tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
+        tmp.save("/sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle/models/tmp_inferer.png")
         max(probs[0])
         np.unique(binary_mask)
         np.unique(probs)
