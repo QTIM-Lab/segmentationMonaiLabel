@@ -130,7 +130,7 @@ class MedSamBundleInferTask(BundleInferTask):
                 # pdb.set_trace()
                 network = os.path.join(br, 'models', 'model_best.pt')
                 # pdb.set_trace()
-                outputs = inferer(inputs, network=network, device=data['device'])
+                outputs = inferer(inputs, network=network, device=data['device'], trained=data['trained'])
             # pdb.set_trace()
 
             if device.startswith("cuda"):
@@ -263,8 +263,8 @@ class MedSamBundleInferTask(BundleInferTask):
         if self.type == InferType.DETECTION:
             data = self.run_detector(data, device=device)
         else:
-            # pdb.set_trace()
             data = self.run_inferer(data, device=device)    
+            # pdb.set_trace()
             # data = self.run_inferer(pre_transforms, device=device)    
         
         if callback_run_inferer:

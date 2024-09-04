@@ -16,6 +16,7 @@ class MedSamInferer(SimpleInferer):
         self._processor = SamProcessor.from_pretrained("flaviagiammarino/medsam-vit-base")
 
     def forward(self, inputs, device, trained=True):
+        # pdb.set_trace()
         if trained:
             model_ckpt_path = "/sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle/models/epoch=20-step=210.ckpt"
             raw_torch_load = torch.load(model_ckpt_path)
@@ -25,7 +26,6 @@ class MedSamInferer(SimpleInferer):
         else:
             self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base")
         self._model.to(device) 
-        pdb.set_trace()
         input_instance = inputs[0]
         pv = input_instance["pixel_values"]
         ib = input_instance["input_boxes"]
@@ -70,6 +70,6 @@ class MedSamInferer(SimpleInferer):
         device = kwargs.get('device', None) if kwargs else 'cpu'
         print("Device:", device)
         # pdb.set_trace()
-        return self.forward(inputs, device)
+        return self.forward(inputs, device, trained=kwargs.get('trained', True))
         # Below will be run from SimpleInferer and we are overriding
         # return super().__call__(inputs, network, *args, **kwargs)

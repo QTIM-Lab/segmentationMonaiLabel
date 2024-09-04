@@ -215,12 +215,13 @@ class MedSamWriter:
             else:
                 # import pdb; pdb.set_trace()
                 image_np = image_np.squeeze(0).numpy().astype(np.uint8)
-                np.unique(image_np)
+                # np.unique(image_np)
                 R = image_np
                 G = np.zeros_like(image_np)
                 B = np.zeros_like(image_np)
-                rgb_image = np.stack([R,G,B], axis=-1)
-                pil_image = Image.fromarray(rgb_image, mode='RGB')
+                A = np.where(image_np == 255, 255, 0).astype(np.uint8)
+                rgb_image = np.stack([R,G,B,A], axis=-1)
+                pil_image = Image.fromarray(rgb_image, mode='RGBA')
                 pil_image.save(output_file)
                 pil_image.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
                 # write_itk(image_np, output_file, affine if len(image_np.shape) > 2 else None, dtype, compress)
