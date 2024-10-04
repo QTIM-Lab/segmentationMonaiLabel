@@ -14,7 +14,7 @@ class MyCustomNet(nn.Module):
         super().__init__()
 
         pretrained_model = SegformerForSemanticSegmentation.from_pretrained(
-            "nvidia/mit-b5", local_files_only=True
+            "nvidia/mit-b5", local_files_only=False
         )
         # Get the model's configuration
         config = pretrained_model.config
