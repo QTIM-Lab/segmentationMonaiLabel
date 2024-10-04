@@ -45,6 +45,8 @@ The following describes how to start the application locally, for development pu
 
 MONAI Label API Server:
 
+
+### Python or pyenv
 ```bash
 git clone https://github.com/QTIM-Lab/segmentationMonaiLabel.git
 cd segmentationMonaiLabel
@@ -72,6 +74,12 @@ python -c "import torch; print(torch.cuda.is_available())"
 # Launch the server with the IntegrationBundle and the SegformerBundle
 # (erase IntegrationBundle if don't want, only need Segformer for segmentation)
 monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
+```
+
+### Docker
+
+```bash
+docker build -t qtim/segmentationmonailabel:latest .
 ```
 
 React Frontend:
