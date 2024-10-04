@@ -80,6 +80,13 @@ monailabel start_server --app apps/monaibundle --studies datastore --conf bundle
 
 ```bash
 docker build -t qtim/segmentationmonailabel:latest .
+docker run \
+  -it \
+  -v ./:/segmentationMonaiLabel \
+  -w /segmentationMonaiLabel \
+  --rm qtim/segmentationmonailabel:latest bash
+
+monailabel start_server --app apps/monaibundle --studies datastore --conf bundles IntegrationBundle,SegformerBundle,MedSamBundle --conf zoo_source ngc
 ```
 
 React Frontend:

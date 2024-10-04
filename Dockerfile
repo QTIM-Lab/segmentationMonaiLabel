@@ -1,4 +1,4 @@
-FROM projectmonai/monailabel:latest
+FROM projectmonai/monailabel:0.8.0
 
 COPY apps/monaibundle/requirements.txt /
 

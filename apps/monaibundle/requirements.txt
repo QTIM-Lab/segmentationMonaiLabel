@@ -13,5 +13,5 @@ torch
 torchvision
 torchaudio
 monailabel
-transformers
-opencv-python
+transformers==4.30.0
+opencv-python==4.7.0.72
