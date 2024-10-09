@@ -1,5 +1,6 @@
 FROM projectmonai/monailabel:0.8.0
 
+# git test
 COPY apps/monaibundle/requirements.txt /
 
 RUN pip install -r /requirements.txt
