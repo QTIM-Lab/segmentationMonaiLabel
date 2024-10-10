@@ -15,16 +15,25 @@ class MedSamInferer(SimpleInferer):
         self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base", local_files_only=False)
         self._processor = SamProcessor.from_pretrained("flaviagiammarino/medsam-vit-base")
 
-    def forward(self, inputs, device, trained=True):
+    def forward(self, inputs, device, trained=False):
         # pdb.set_trace()
         if trained:
-            model_ckpt_path = "/sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle/models/epoch=20-step=210.ckpt"
+            model_ckpt_path = "/home/bearceb/Documents/OPTIMEyes/monailabel/apps/monaibundle/model/MedSamBundle/models/epoch=20-step=210.ckpt"
             raw_torch_load = torch.load(model_ckpt_path)
              # Create a new state dictionary with updated keys
             new_state_dict = {key.replace("model.", ""): value for key, value in raw_torch_load['state_dict'].items()}
             self._model.load_state_dict(state_dict = new_state_dict, strict=True)
         else:
-            self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base")
+            # pdb.set_trace()
+            self._model = SamModel.from_pretrained("flaviagiammarino/medsam-vit-base", local_files_only=False)
+            # Or load from local
+            ## Archive way to save but is handled in README.md at root of OPTIMEyes
+            # torch.save(self._model.state_dict(), '/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt')
+            ## Use this to load from disk
+            # loaded_weights = torch.load('/monailabel/apps/monaibundle/model/MedSamBundle/models/model.pt', weights_only=True)
+            # self._model.load_state_dict(raw_torch_load)
+
+            
         self._model.to(device) 
         input_instance = inputs[0]
         pv = input_instance["pixel_values"]
@@ -44,10 +53,11 @@ class MedSamInferer(SimpleInferer):
         probs = self._processor.image_processor.post_process_masks(l_sig, o_s, r_i_s, binarize=False)
         binary_mask = (probs[0] > 0.45).int() * 255
         tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
-        tmp.save("/sddata/projects/segmentationMonaiLabel/apps/monaibundle/model/MedSamBundle/models/tmp_inferer.png")
+        tmp.save("/monailabel/apps/deleteme/tmp_inferer.png")
         max(probs[0])
         np.unique(binary_mask)
-        np.unique(probs)
+        # np.unique(probs)
+
         # tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
         # tmp.save("/sddata/projects/segmentationMonaiLabel/tmp_inferer.png")
 
@@ -65,7 +75,7 @@ class MedSamInferer(SimpleInferer):
 
         """
         if network is not None:
-            print("LOADING model.pt")
+            print("LOADING model_best.pt")
             self._model.load_state_dict(torch.load(network))
         device = kwargs.get('device', None) if kwargs else 'cpu'
         print("Device:", device)

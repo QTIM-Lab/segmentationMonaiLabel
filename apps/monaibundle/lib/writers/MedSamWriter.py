@@ -222,8 +222,8 @@ class MedSamWriter:
                 A = np.where(image_np == 255, 255, 0).astype(np.uint8)
                 rgb_image = np.stack([R,G,B,A], axis=-1)
                 pil_image = Image.fromarray(rgb_image, mode='RGBA')
-                pil_image.save(output_file)
-                pil_image.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
+                pil_image.save(output_file.replace("jpg","png")) # PNG file type forced
+                pil_image.save("/monailabel/apps/deleteme/tmp_inferer_from_MedSamWriter_class.png")
                 # write_itk(image_np, output_file, affine if len(image_np.shape) > 2 else None, dtype, compress)
         else:
             output_file = image_np

@@ -14,11 +14,11 @@ imports:
 
 device: '$"cuda" if torch.cuda.is_available() else "cpu"'
 
-processor: '$SamProcessor.from_pretrained("facebook/sam-vit-base")'
+processor: '$SamProcessor.from_pretrained("flaviagiammarino/medsam-vit-base")'
 
 dataset:
   _target_: $SAMDataset
-  dataset: '/sddata/projects/segmentationMonaiLabel/datastore/visivite_GA.png'
+  dataset: '/home/bearceb/Documents/OPTIMEyes/monailabel/datastore/test_data__Figure_06-LRG.png'
   processor: '@processor'
   mode: 'infer'
   # dataset: '@dataset_csv'
@@ -29,7 +29,7 @@ dataloader: $torch.utils.data.DataLoader
 
 test_tensor: '$torch.rand(*[4,4]).to(@device)'
 
-model: '$SamModel.from_pretrained("facebook/sam-vit-base")'
+model: '$SamModel.from_pretrained("flaviagiammarino/medsam-vit-base")'
 
 network_def:
   _target_: scripts.net.MedSamNet

@@ -129,7 +129,7 @@ class SAMDataset(Dataset):
         # tmp = Image.fromarray(np.uint8(image)).convert('RGB')
         # tmp = Image.fromarray(np.uint8(label)).convert('RGB')
         # tmp.save("/sddata/projects/segmentationMonaiLabel/tmp.png")
-        prompt = [0, 0, image.shape[1], image.shape[2]]
+        # prompt = [0, 0, image.shape[1], image.shape[2]]
         inputs = self.processor([image], input_boxes=[[prompt]], return_tensors="pt", do_rescale=False)
 
         # remove batch dimension which the processor adds by default

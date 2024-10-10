@@ -52,7 +52,7 @@ class MedSamBundleInferTask(BundleInferTask):
     This provides Inference Engine for pre-trained model over Multi Atlas Labeling Beyond The Cranial Vault (BTCV)
     dataset.
     """
-
+    description = "Inference using MedSamBundle"
     def __init__(
         self,
         path: str,
@@ -83,6 +83,8 @@ class MedSamBundleInferTask(BundleInferTask):
             load_strict=load_strict,
             **kwargs,
         )
+        # pdb.set_trace()
+        # super(MedSamBundleInferTask, self).__init__(path=path, conf=conf, const=const, type=type, pre_filter=pre_filter, post_filter=post_filter, extend_load_image=extend_load_image, add_post_restore=add_post_restore, dropout=dropout, load_strict=load_strict, **kwargs)
 
     def writer(self, data: Dict[str, Any], extension=None, dtype=None) -> Tuple[Any, Any]:
         """
@@ -216,6 +218,7 @@ class MedSamBundleInferTask(BundleInferTask):
         Returns: Label (File Path) and Result Params (JSON)
         """
         begin = time.time()
+        # req = copy.deepcopy(self.config())
         req = copy.deepcopy(self._config)
         req.update(request)
 
