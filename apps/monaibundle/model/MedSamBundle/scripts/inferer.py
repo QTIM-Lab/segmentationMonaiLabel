@@ -53,7 +53,7 @@ class MedSamInferer(SimpleInferer):
         probs = self._processor.image_processor.post_process_masks(l_sig, o_s, r_i_s, binarize=False)
         binary_mask = (probs[0] > 0.45).int() * 255
         tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
-        tmp.save("/monailabel/apps/deleteme/tmp_inferer.png")
+        # tmp.save("/monailabel/apps/deleteme/tmp_inferer.png")
         max(probs[0])
         np.unique(binary_mask)
         # np.unique(probs)
