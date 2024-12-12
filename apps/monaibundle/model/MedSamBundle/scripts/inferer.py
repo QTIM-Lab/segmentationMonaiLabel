@@ -56,16 +56,16 @@ class MedSamInferer(SimpleInferer):
         # pv = input_instance["pixel_values"].reshape((1, 3, 1024, 1024))
         # ib = input_instance["input_boxes"].reshape(1, 1, 4)
         outputs = self._model(pixel_values=pv.to(device), input_boxes=ib.to(device), multimask_output=False)
-        ### AV
+        
+        ############## AV
         logits = outputs.pred_masks
         o_s = input_instance["original_sizes"].cpu()
         r_i_s = input_instance["reshaped_input_sizes"].cpu()
         logits_resized = self._processor.image_processor.post_process_masks(logits, o_s, r_i_s, binarize=False)
         # pdb.set_trace()
         probs = [l.sigmoid().cpu() for l in logits_resized]
-        # logits_resized.squeeze().max()
-        ### AV
-        ### BB
+        ############## AV
+        ############## BB
         # logits = outputs.pred_masks
         # l_sig = logits.sigmoid().cpu()
         # logits.squeeze().max()
@@ -73,7 +73,8 @@ class MedSamInferer(SimpleInferer):
         # r_i_s = input_instance["reshaped_input_sizes"].cpu()
         # # pdb.set_trace()
         # probs = self._processor.image_processor.post_process_masks(l_sig, o_s, r_i_s, binarize=False)
-        ### BB
+        ############## BB
+
         binary_mask = (probs[0] > 0.50).int() * 255
         tmp = Image.fromarray(np.uint8(np.array(binary_mask.squeeze()))).convert('RGB')
         # tmp.save("/scratch90/bb-10_25_2024/segmentationMonaiLabel/tmp.png")
